@@ -1,0 +1,189 @@
+{
+    "callHomeConfiguration": null, 
+    "installationId": null, 
+    "liaPassword": "Scaleio123", 
+    "licenseKey": null, 
+    "mdmIPs": [
+        "192.168.102.13", 
+        "192.168.102.12"
+    ], 
+    "mdmPassword": "Scaleio123", 
+    "primaryMdm": {
+        "managementIPs": [
+            "192.168.102.13", 
+            "192.168.102.12"
+        ], 
+        "node": {
+            "domain": null, 
+            "liaPassword": null, 
+            "nodeIPs": [
+                "192.168.102.12"
+            ], 
+            "nodeName": null, 
+            "ostype": "unknown", 
+            "password": null, 
+            "userName": null
+        }, 
+        "nodeInfo": null
+    }, 
+    "remoteSyslogConfiguration": null, 
+    "sdcList": [
+        {
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.13"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "splitterRpaIp": null
+        }, 
+        {
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.12"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "splitterRpaIp": null
+        }, 
+        {
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.11"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "splitterRpaIp": null
+        }
+    ], 
+    "sdsList": [
+        {
+            "allIPs": [
+                "192.168.102.11"
+            ], 
+            "devices": [], 
+            "faultSet": null, 
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.11"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "optimized": false, 
+            "port": 7072, 
+            "protectionDomain": "default", 
+            "sdcOnlyIPs": [], 
+            "sdsName": "SDS_[192.168.102.11]", 
+            "sdsOnlyIPs": []
+        }, 
+        {
+            "allIPs": [
+                "192.168.102.12"
+            ], 
+            "devices": [], 
+            "faultSet": null, 
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.12"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "optimized": false, 
+            "port": 7072, 
+            "protectionDomain": "default", 
+            "sdcOnlyIPs": [], 
+            "sdsName": "SDS_[192.168.102.12]", 
+            "sdsOnlyIPs": []
+        }, 
+        {
+            "allIPs": [
+                "192.168.102.13"
+            ], 
+            "devices": [], 
+            "faultSet": null, 
+            "node": {
+                "domain": null, 
+                "liaPassword": null, 
+                "nodeIPs": [
+                    "192.168.102.13"
+                ], 
+                "nodeName": null, 
+                "ostype": "unknown", 
+                "password": null, 
+                "userName": null
+            }, 
+            "nodeInfo": null, 
+            "optimized": false, 
+            "port": 7072, 
+            "protectionDomain": "default", 
+            "sdcOnlyIPs": [], 
+            "sdsName": "SDS_[192.168.102.13]", 
+            "sdsOnlyIPs": []
+        }
+    ], 
+    "secondaryMdm": {
+        "managementIPs": [
+            "192.168.102.13", 
+            "192.168.102.12"
+        ], 
+        "node": {
+            "domain": null, 
+            "liaPassword": null, 
+            "nodeIPs": [
+                "192.168.102.13"
+            ], 
+            "nodeName": null, 
+            "ostype": "unknown", 
+            "password": null, 
+            "userName": null
+        }, 
+        "nodeInfo": null
+    }, 
+    "tb": {
+        "node": {
+            "domain": null, 
+            "liaPassword": null, 
+            "nodeIPs": [
+                "192.168.102.11"
+            ], 
+            "nodeName": null, 
+            "ostype": "unknown", 
+            "password": null, 
+            "userName": null
+        }, 
+        "nodeInfo": null, 
+        "tbIPs": [
+            "192.168.102.11"
+        ]
+    }
+}
