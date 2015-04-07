@@ -723,7 +723,7 @@ class ScaleIO(SIO_Generic_Object):
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(is_valid_volsize(volSizeInMb) * 1024),  'name': volName, 'volumeType': volType}
         pprint(volumeDict)
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
@@ -834,9 +834,6 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'), json=unmapVolumeFromSdcDict)    
         return response
     
-    
-    
-     
     def is_ip_addr(ipstr):
         ipstr_chunks = ipstr.split('.')
         if len(ipstr_chunks) != 4:
@@ -849,9 +846,14 @@ class ScaleIO(SIO_Generic_Object):
                 return False
         return True
     
+    def is_valid_volsize(volsize):
+        if type(volsize) is int:
+            size_temp = divmod(volsize, 8192)
+            if size_temp[1] > 0:
+                return (size_temp[0] + 1) * 8192
+        else:
+            return int(8192)
     
-    
-
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)
     if len(sys.argv) == 1:
@@ -864,4 +866,3 @@ if __name__ == "__main__":
         pprint(sio.volumes)
         pprint(sio.protection_domains)
         pprint(sio.storage_pools)
-    

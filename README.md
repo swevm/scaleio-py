@@ -11,6 +11,44 @@ Requirements:
 * [Requests-Toolbelt](https://github.com/sigmavirus24/requests-toolbelt)
 * ScaleIO 1.3 or 1.31 installation with REST API Gateway configured (note, the [Vagrantfile](https://github.com/virtualswede/vagrant-scaleio) from @virtualswede works fine to deploy ScaleIO with for development and testing)
 
+## Module status
+Goal is to resemble the ScaleIO API in a Pythonic way. Atm ScaleIO-py is in Alpha stage(mid-late). Focus will be on getting basic features become
+stable before adding fancy functionality. 
+
+
+## Supported CRUD functionality
+### Retrieve methods
+* Get list of SDS objects
+* Get list of SDC objects
+* Get list of Protection Domain objects
+* Get list of Volume Objects
+* Get list of Storage Pool objects
+* Get list of System objects
+* Get volume by id or name
+* Get SDC by id, name or ip
+* Get SDS by id, name or ip
+* Get Storage Pool by id or name
+* Get Protection Domain by id or name
+* Get Volume by id or name
+* Get list of SDC(s) mapped to Volume by volumeObject
+
+### Create
+* Create Volume by Protection Domain name [rename??] (Take PD object not PD name as argument)
+* Map Volume to SDC
+* Map Volume to all SDCs
+* Unmap Volume from SDC
+* Install new ScaleIO cluster (binaries and basic configuration using IM API)
+
+### Delete
+* Delete Volume
+* Delete Volume snapshot (by Volume Object) [Need testing]
+* Delete SDC from cluster (same as unregister SDC from cluster) [remove one of them]
+* Create Volume snapshot byt System id [Need testing]
+
+### Update
+* Set SDC name
+* Upload binaries to be installed by IM
+
 
 ## Code examples
 
