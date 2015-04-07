@@ -16,6 +16,12 @@ Goal is to resemble the ScaleIO API in a Pythonic way. Atm ScaleIO-py is in Alph
 stable before adding fancy functionality. 
 
 
+## Installation
+* git clone https://github.com/swevm/scaleio-py.git
+* cd scaleio-py
+* python setup.py install
+
+
 ## Supported CRUD functionality
 ### Retrieve methods
 * Get list of SDS objects
