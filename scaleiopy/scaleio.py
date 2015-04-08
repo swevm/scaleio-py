@@ -100,6 +100,7 @@ class ScaleIO_System(SIO_Generic_Object):
         A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
+        pprint (dict)
         return ScaleIO_System(**dict)
     
 class ScaleIO_Storage_Pool(SIO_Generic_Object): 
@@ -394,17 +395,26 @@ class ScaleIO(SIO_Generic_Object):
         self._verify_ssl = verify_ssl
         self._logged_in = False
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
-    
+        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
+
     def _login(self):
         logging.info("Logging into " + "{}/{}".format(self._api_url, "login"))
+        logging.info("With credentials " + "{}/{}".format(self._username, self._password))
+        print "Password: " + self._password
         login_response = self._session.get(
             "{}/{}".format(self._api_url,"login"),
             verify=self._verify_ssl,
             auth=HTTPBasicAuth(self._username, self._password)
         ).json()
-        self._auth_token = login_response
-        self._session.auth = HTTPBasicAuth('',self._auth_token)
-        self._logged_in = True
+        if type(login_response) is dict:
+            # If we got here, something went wrong during login
+            for key, value in login_response.iteritems():
+                if key == 'errorCode':
+                    raise RuntimeError(login_response['message'])
+        else:
+            self._auth_token = login_response
+            self._session.auth = HTTPBasicAuth('',self._auth_token)
+            self._logged_in = True
 
     def _check_login(self):
         if not self._logged_in:
@@ -719,12 +729,15 @@ class ScaleIO(SIO_Generic_Object):
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
+
+        #print "Vol size: " + self.is_valid_volsize(volSizeInMb)
+
         if thinProvision:
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(is_valid_volsize(volSizeInMb) * 1024),  'name': volName, 'volumeType': volType}
-        pprint(volumeDict)
+        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        #pprint(volumeDict)
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
@@ -846,13 +859,13 @@ class ScaleIO(SIO_Generic_Object):
                 return False
         return True
     
-    def is_valid_volsize(volsize):
+    def is_valid_volsize(self,volsize):
         if type(volsize) is int:
-            size_temp = divmod(volsize, 8192)
+            size_temp = divmod(volsize, 1024)
             if size_temp[1] > 0:
-                return (size_temp[0] + 1) * 8192
+                return int((1 + size_temp[1]) * 1024)
         else:
-            return int(8192)
+            return int(volsize)
     
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)

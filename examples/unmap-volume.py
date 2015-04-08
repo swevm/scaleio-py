@@ -1,4 +1,4 @@
-from scaleio-py import scaleio
+from scaleiopy import scaleio
 import logging
 from pprint import pprint
 import sys

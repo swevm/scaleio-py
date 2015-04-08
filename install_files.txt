@@ -1,0 +1,1 @@
+/Library/Python/2.7/site-packages/ScaleIO_py-0.3-py2.7.egg
