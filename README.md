@@ -1,6 +1,6 @@
 # ScaleIO-py
 
-#### A module for interacting with the EMC ScaleIO 1.3+ REST API.
+#### A Python module for interacting with the EMC ScaleIO 1.3+ REST API.
 
 Authors: Magnus Nilsson & Matt Cowger
 
@@ -12,8 +12,7 @@ Requirements:
 * ScaleIO 1.3 or 1.31 installation with REST API Gateway configured (note, the [Vagrantfile](https://github.com/virtualswede/vagrant-scaleio) from @virtualswede works fine to deploy ScaleIO with for development and testing)
 
 ## Module status
-Goal is to resemble the ScaleIO API in a Pythonic way. Atm ScaleIO-py is in Alpha stage(mid-late). Focus will be on getting basic features become
-stable before adding fancy functionality. 
+Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm ScaleIO-py is in late Alpha stage and focus will be on getting basic features become stable (especially the to/from object mapping) before adding fancy functionality. 
 
 
 ## Installation
@@ -57,6 +56,7 @@ stable before adding fancy functionality.
 
 
 ## Code examples
+Have a look in examples directory for complete code examples.
 
 ### Connect to ScaleIO API
 ```
@@ -88,9 +88,9 @@ pprint(sio.volumes)
 pprint(sio.protection_domains)
 ```
 
-#### Create a new Volume in Proctection Domain
+#### Create a new Volume in Protection Domain
 ```
-#Create a new Volume
+#Create a new Volume (of 8192Mb, smallest possible)
 sio.create_volume_by_pd_name('testvol001', 8192, sio.get_pd_by_name('default'))
 
 #Create Volume and Map to single SDC in one operation
