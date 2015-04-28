@@ -31,6 +31,8 @@ class SIO_Generic_Object(object):
         return self.__str__()
 
 class ScaleIO_System(SIO_Generic_Object):
+    """ Represents one ScaleIO installation as a class object  - Owns other classes that represents differenct ScaleIO components """
+    
     def __init__(self,
         id=None,
         name=None,
@@ -103,7 +105,9 @@ class ScaleIO_System(SIO_Generic_Object):
         pprint (dict)
         return ScaleIO_System(**dict)
     
-class ScaleIO_Storage_Pool(SIO_Generic_Object): 
+class ScaleIO_Storage_Pool(SIO_Generic_Object):
+    """ ScaleIO Storage Pool Class representation """
+    
     def __init__(self,
         id=None,
         name=None,
@@ -164,6 +168,8 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
         return ScaleIO_Storage_Pool(**dict)
 
 class ScaleIO_Protection_Domain(SIO_Generic_Object):
+    """ ScaleIO Protection Domain Class repreentation """
+    
     def __init__(self,
         id=None,
         links=None,
@@ -201,6 +207,8 @@ class ScaleIO_Protection_Domain(SIO_Generic_Object):
         return ScaleIO_Protection_Domain(**dict)
 
 class ScaleIO_Volume(SIO_Generic_Object):
+    """ ScaleIO Volume Class representation """
+    
     def __init__(self,
                  ancestorVolumeId=None,
                  consistencyGroupId=None,
@@ -247,6 +255,8 @@ class ScaleIO_Volume(SIO_Generic_Object):
         return ScaleIO_Volume(**dict)
 
 class ScaleIO_SDC(SIO_Generic_Object):
+    """ ScaleIO SDC Class representation """
+    
     def __init__(self,
                  id=None,
                  links=None,
@@ -278,6 +288,8 @@ class ScaleIO_SDC(SIO_Generic_Object):
         return ScaleIO_SDC(**dict)
 
 class ScaleIO_SDS(SIO_Generic_Object):
+    """ ScaleIO SDS Class representation """
+    
     def __init__(self,
                  drlMode=None,
                  ipList=None,
@@ -326,6 +338,29 @@ class ScaleIO_SDS(SIO_Generic_Object):
         JSON response from the server.
         """
         return ScaleIO_SDS(**dict)
+    
+class SnapshotSpecification(SIO_Generic_Object):
+    """
+    Input: list of SIO Snapshot definitions
+            For example: { "snapshotDefs": [ {" volumeId":"2dd9132300000000", "snapshotName":"000_snap1"}, {"volumeId":"2dd9132300000004", "snapshotName":"004_snap1" }]}
+    If adding more than one Volume to a Snapshot definition it will autoamtically be trated as a consistency group
+    
+    Return:
+        volumeIdList snapshotGroupId
+        for example:
+        {"volumeIdList":[ "2dd9132400000001"], "snapshotGroupId":"d2e53daf00000001"}
+    """
+    _snapshotList = []
+    
+    def addVolume(self, volObj):
+        _snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
+    
+    def removeVolume(self, volObj):
+        pass
+    
+    def __to_dict__(self):
+        return {"SnapshotDefs" : _snapshotList}
+
 
 class IP_List(object):
     def __init__(self, ip, role):
@@ -370,7 +405,15 @@ class TLS1Adapter(HTTPAdapter):
 
 class ScaleIO(SIO_Generic_Object):
     """
-    The ScaleIO class provides a pythonic way to interact with and manage a ScaleIO cluster/
+    The ScaleIO class provides a pythonic way to interact with a ScaleIO cluster
+    Depends: Working ScaleIO cluster and configured API gateway
+    
+    Provides:
+    * API Login
+    * Create/Delete Volume
+    * Map/Unmap Volume to host
+    * GET storagepools, systemobject, protectiondomains, sdc, sdc, volumes
+
     """
     def __init__(self, api_url, username, password, verify_ssl=False):
         """
@@ -383,7 +426,7 @@ class ScaleIO(SIO_Generic_Object):
         :param password: Password
         :type password: str
         :return: A ScaleIO object
-        :rtype: ScaleIO
+        :rtype: ScaleIO Object
         """
 
         self._username = username
@@ -687,28 +730,40 @@ class ScaleIO(SIO_Generic_Object):
             return True
         return False
     
-    def create_volume_snapshot_by_system_id(self, systemObj, snapVolumeList, **kwargs):
+    def get_snapshot_by_vol_name(self, volObj):
+        pass
+    
+    def get_snapshot_by_vol_id(self, volObj):
+        pass
+    
+    def get_snapshots(self, systemObj):
+        pass
+    
+    def get_snapshot_group_id_by_vol_name(self, volObj):
+        pass
+    
+    def get_snapshot_group_id_by_vol_id(self, volObj):
+        pass
+    
+    def create_snapshot_by_system_id(self, systemObj, snapshotSpecificationObject):
         """
-        /api/instances /System::{id}/action/snapshotVolumes
-        type: POST
-        Required:
-            snapshotDefs - a list of combination of "volumeId" volume ID and "snapshotName" (optional field) snapshot name.
-            For example: { "snapshotDefs": [ {" volumeId":"2dd9132300000000", "snapshotName":"snap1"}, {"volumeId":"12342 }]}
-        Return:
-            volumeIdList snapshotGroupId
-            for example:
-            {"volumeIdList":[ "2dd9132400000001"], "snapshotGroupId":"d2e53daf00000001"}
-        """
+        Create snapshot for list of volumes
+        :param systemObj: 
+        :param snapshotSpecificationObject: Of class SnapshotSpecification
+        :rtype: SnapshotGroupId
+        """        
         snapshotDict = {'snapshotDefs': snapVolumeList}
         try:
             response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", systemObj.id, 'action/snapshotVolumes'))
         except:
-            raise RuntimeError("create_volume_snapshort_by_system_id() - Error communicating with ScaleIO gateway")
+            raise RuntimeError("create_snapshot_by_system_id() - Error communicating with ScaleIO gateway")
         return response
         
-    def delete_volume_snapshot(self, snapshotObj, **kwargs):
-        pass
+    def delete_snapshot(self, snapshotGroupId):
         """
+        :param snapshotGroupId: ID of snapshot gorup ID to be removed
+        
+        
         /api/instances/System::{id}/action/removeConsistencyGroupSnapshots
         type: POST
         Required:
@@ -717,11 +772,10 @@ class ScaleIO(SIO_Generic_Object):
             numberOfVolumes - number of volumes that were removed because of this operation
         
         """
-        #mapVolumeToSdcDict = {'sdcId': sdcObj.id, 'allowMultipleMappings': str(allowMultipleMappings).upper()}
         try:
-            response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", snapshotObj.id, 'action/removeConsistencyGroupSnapshots'))
+            response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", snapshotGroupId, 'action/removeConsistencyGroupSnapshots'))
         except:
-            raise RuntimeError("delete_volume_snapshot() - Error communicating wit ScaleIO gateway")
+            raise RuntimeError("delete_snapshot() - Error communicating wit ScaleIO gateway")
         
         return response
     
@@ -848,6 +902,11 @@ class ScaleIO(SIO_Generic_Object):
         return response
     
     def is_ip_addr(ipstr):
+        """
+        Convenience method to verify if string is an IP addr?
+        :param ipstr: Stinrg containing IP address
+        :rtype True if string is a valid IP address
+        """
         ipstr_chunks = ipstr.split('.')
         if len(ipstr_chunks) != 4:
             return False
@@ -860,13 +919,19 @@ class ScaleIO(SIO_Generic_Object):
         return True
     
     def is_valid_volsize(self,volsize):
+        """
+        Convenience method that round input to valid ScaleIO Volume size (8GB increments)
+        :param volsize: Size in MB
+        :rtype int: Valid ScaleIO Volume size rounded to nearest 8GB increment above or equal to volsize
+        """
+        
         if type(volsize) is int:
-            size_temp = divmod(volsize, 1024)
-            if size_temp[1] > 0:
-                return int((1 + size_temp[1]) * 1024)
+            size_temp = divmod(volsize, 8192)
+            if size_temp[1] > 0: # If not on 8GB boundary
+                return int((1 + size_temp[0]) * 8192) # Always round to next 8GB increment
         else:
             return int(volsize)
-    
+
 if __name__ == "__main__":
     logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)
     if len(sys.argv) == 1:
