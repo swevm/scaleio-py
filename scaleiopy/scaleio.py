@@ -63,7 +63,7 @@ class ScaleIO_System(SIO_Generic_Object):
         links = None
   
     ):
-        self.id=None
+        self.id=id
         self.name=None
         self.system_version_name = systemVersionName
         self.primary_mdm_actor_ip_list = []
@@ -350,16 +350,17 @@ class SnapshotSpecification(SIO_Generic_Object):
         for example:
         {"volumeIdList":[ "2dd9132400000001"], "snapshotGroupId":"d2e53daf00000001"}
     """
-    _snapshotList = []
+    def __init__(self):
+        self._snapshotList = []
     
     def addVolume(self, volObj):
-        _snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
+        self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
     
     def removeVolume(self, volObj):
         pass
     
     def __to_dict__(self):
-        return {"SnapshotDefs" : _snapshotList}
+        return {"snapshotDefs" : self._snapshotList}
 
 
 class IP_List(object):
@@ -637,7 +638,10 @@ class ScaleIO(SIO_Generic_Object):
 
     def get_system_objects(self):
         return self.system
-
+    
+    def get_system_id(self):
+        return self.system[0].id
+        
     def get_sds_by_name(self,name):
         for sds in self.sds:
             if sds.name == name:
@@ -745,23 +749,24 @@ class ScaleIO(SIO_Generic_Object):
     def get_snapshot_group_id_by_vol_id(self, volObj):
         pass
     
-    def create_snapshot_by_system_id(self, systemObj, snapshotSpecificationObject):
+    def create_snapshot(self, systemId, snapshotSpecificationObject):
         """
         Create snapshot for list of volumes
-        :param systemObj: 
+        :param systemID: Cluster ID 
         :param snapshotSpecificationObject: Of class SnapshotSpecification
         :rtype: SnapshotGroupId
-        """        
-        snapshotDict = {'snapshotDefs': snapVolumeList}
-        try:
-            response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", systemObj.id, 'action/snapshotVolumes'))
-        except:
-            raise RuntimeError("create_snapshot_by_system_id() - Error communicating with ScaleIO gateway")
+        """
+        self._check_login()
+        #try:
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", systemId, 'action/snapshotVolumes'), json=snapshotSpecificationObject.__to_dict__())
+        #except:
+        #    raise RuntimeError("create_snapshot_by_system_id() - Error communicating with ScaleIO gateway")
         return response
         
-    def delete_snapshot(self, snapshotGroupId):
+    def delete_snapshot(self, systemId, snapshotGroupId):
         """
-        :param snapshotGroupId: ID of snapshot gorup ID to be removed
+        :param systemId: ID of Cluster
+        :param snapshotGroupId: ID of snapshot group ID to be removed
         
         
         /api/instances/System::{id}/action/removeConsistencyGroupSnapshots
@@ -772,11 +777,12 @@ class ScaleIO(SIO_Generic_Object):
             numberOfVolumes - number of volumes that were removed because of this operation
         
         """
-        try:
-            response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", snapshotGroupId, 'action/removeConsistencyGroupSnapshots'))
-        except:
-            raise RuntimeError("delete_snapshot() - Error communicating wit ScaleIO gateway")
-        
+        #try:
+        consistencyGroupIdDict = {'snapGroupId':snapshotGroupId}
+        self._check_login()
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/System::", systemId, 'action/removeConsistencyGroupSnapshots'), json=consistencyGroupIdDict)
+        #except:
+        #    raise RuntimeError("delete_snapshot() - Error communicating wit ScaleIO gateway")
         return response
     
     def create_volume_by_pd_name(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
