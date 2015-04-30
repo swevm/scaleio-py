@@ -31,7 +31,7 @@ node3 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.13'], None, 'linux'
 ##########################################
 # Construct basic info for System_Object #
 ##########################################
-mdmIPs = ['192.168.102.11','192.168.102.12']
+mdmIPs = ['192.168.102.12','192.168.102.13']
 sdcList = []
 sdsList = []
 mdmPassword = 'Scaleio123'
@@ -42,9 +42,9 @@ installationId = None
 ########################################
 # Create MDMs and TB for System_Object #
 ########################################
-primaryMdm = sioobj.Mdm_Object(json.loads(node1.to_JSON()), None, None, node1.nodeIPs)
-secondaryMdm = sioobj.Mdm_Object(json.loads(node2.to_JSON()), None, None, node2.nodeIPs)
-tb = sioobj.Tb_Object(json.loads(node3.to_JSON()), None, node3.nodeIPs)
+primaryMdm = sioobj.Mdm_Object(json.loads(node2.to_JSON()), None, None, node2.nodeIPs)
+secondaryMdm = sioobj.Mdm_Object(json.loads(node3.to_JSON()), None, None, node3.nodeIPs)
+tb = sioobj.Tb_Object(json.loads(node1.to_JSON()), None, node1.nodeIPs)
 callHomeConfiguration = None # {'callHomeConfiguration':'None'}
 remoteSyslogConfiguration = None # {'remoteSysogConfiguration':'None'}
 
