@@ -8,6 +8,7 @@ import ssl
 import logging
 import time
 import sys
+import logging
 
 from pprint import pprint
 
@@ -102,7 +103,6 @@ class ScaleIO_System(SIO_Generic_Object):
         A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        pprint (dict)
         return ScaleIO_System(**dict)
     
 class ScaleIO_Storage_Pool(SIO_Generic_Object):
@@ -440,11 +440,13 @@ class ScaleIO(SIO_Generic_Object):
         self._logged_in = False
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("Logger initialized!")
 
     def _login(self):
-        logging.info("Logging into " + "{}/{}".format(self._api_url, "login"))
-        logging.info("With credentials " + "{}/{}".format(self._username, self._password))
-        print "Password: " + self._password
+        print "*** DEBUG Login() ***"
+        self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
+        self.logger.debug("With credentials " + "{}/{}".format(self._username, self._password))
         login_response = self._session.get(
             "{}/{}".format(self._api_url,"login"),
             verify=self._verify_ssl,
@@ -454,9 +456,11 @@ class ScaleIO(SIO_Generic_Object):
             # If we got here, something went wrong during login
             for key, value in login_response.iteritems():
                 if key == 'errorCode':
+                    self.logger.error('Login error code: %s', login_response['message'])
                     raise RuntimeError(login_response['message'])
         else:
             self._auth_token = login_response
+            self.logger.debug('Authentication token recieved: %s', self._auth_token)
             self._session.auth = HTTPBasicAuth('',self._auth_token)
             self._logged_in = True
 
@@ -468,7 +472,7 @@ class ScaleIO(SIO_Generic_Object):
         return None
     
     # FIX _do_get method, easier to have one place to do error handling than in all other methods that call _do_get()
-    def _do_get(self, uri, **kwargs):
+    def _do_get(self, url, **kwargs):
         """
         Convinient method for GET requests
         Returns http request status value from a POST request
@@ -477,11 +481,14 @@ class ScaleIO(SIO_Generic_Object):
         # Add error handling. Check for HTTP status here would be much more conveinent than in each calling method
         scaleioapi_post_headers = {'Content-type':'application/json','Version':'1.0'}
         try:
-            response = self._session.get("{}/{}".format(self._api_url, uri)).json()
-            #response = self._session.get(url, headers=scaleioapi_post_headers, **kwargs)
+            #response = self._session.get("{}/{}".format(self._api_url, uri)).json()
+            response = self._session.get(url)
             if response.status_code == requests.codes.ok:
+                self.logger.debug('_do_get() - HTTP response OK, data: %s', response.text)                
                 return response
             else:
+                self.logger.error('_do_get() - HTTP response error: %s', response.status_code)
+                self.logger.error('_do_get() - HTTP response error, data: %s', response.text)                
                 raise RuntimeError("_do_get() - HTTP response error" + response.status_code)
         except:
             raise RuntimeError("_do_get() - Communication error with ScaleIO gateway")
@@ -497,9 +504,13 @@ class ScaleIO(SIO_Generic_Object):
         scaleioapi_post_headers = {'Content-type':'application/json','Version':'1.0'}
         try:
             response = self._session.post(url, headers=scaleioapi_post_headers, **kwargs)
+            self.logger.debug('_do_post() - HTTP response: %s', response.text)
             if response.status_code == requests.codes.ok:
+                self.logger.debug('_do_post() - HTTP response OK, data: %s', response.text)                
                 return response
             else:
+                self.logger.error('_do_post() - HTTP response error: %s', response.status_code)
+                self.logger.error('_do_post() - HTTP response error, data: %s', response.text)                
                 raise RuntimeError("_do_post() - HTTP response error" + response.status_code)
         except:
             raise RuntimeError("_do_post() - Communication error with ScaleIO gateway")
@@ -513,14 +524,7 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url, "types/System/instances")
-                ).json()
-        except:
-            raise ("system() property - Communication error with ScaleIO gateway")
-        #print "*** ScaleIO SYSTEM ***"
-        #pprint(response)
+        response = self._do_get("{}/{}".format(self._api_url, "types/System/instances")).json()
         all_system_objects = []
         for system_object in response:
             all_system_objects.append(ScaleIO_System.from_dict(system_object))
@@ -534,14 +538,7 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url, "types/StoragePool/instances")
-                ).json()
-        except:
-            raise ("system() property - Communication error with ScaleIO gateway")
-        #print "*** ScaleIO STORAGE POOL ***"
-        #pprint(response)
+        response = self._do_get("{}/{}".format(self._api_url, "types/StoragePool/instances")).json() 
         all_storage_pools = []
         for storage_pool_object in response:
             all_storage_pools.append(ScaleIO_Storage_Pool.from_dict(storage_pool_object))
@@ -555,12 +552,7 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url, "types/Sdc/instances")
-                ).json()
-        except:
-            raise RuntimeError("sdc() property - Communication error with ScaleIO gateway")        
+        response = self._do_get("{}/{}".format(self._api_url, "types/Sdc/instances")).json()       
         all_sdc = []
         for sdc in response:
             all_sdc.append(
@@ -576,12 +568,7 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url,"types/Sds/instances")
-                ).json()
-        except:
-            raise RuntimeError("sds() property - Communication error with ScaleIO gateway") 
+        response = self._do_get("{}/{}".format(self._api_url,"types/Sds/instances")).json()
         all_sds = []
         for sds in response:
             all_sds.append(
@@ -597,19 +584,9 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url, "types/Volume/instances")
-                ).json()
-            
-            print "*************"
-            pprint (response)
-            print "*************"
-        except:
-            raise RuntimeError("volumes() property - Communication error with ScaleIO gateway") 
+        response = self._do_get("{}/{}".format(self._api_url, "types/Volume/instances")).json()
         all_volumes = []
         for volume in response:
-            #pprint(volume)
             all_volumes.append(
                 ScaleIO_Volume.from_dict(volume)
             )
@@ -622,15 +599,9 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: list
         """
         self._check_login()
-        try:
-            response = self._session.get(
-                "{}/{}".format(self._api_url, "types/ProtectionDomain/instances")
-                ).json()
-        except:
-            raise RuntimeError("sdc() property - Communication error with ScaleIO gateway") 
+        response = self._do_get("{}/{}".format(self._api_url, "types/ProtectionDomain/instances")).json()
         all_pds = []
         for pd in response:
-            #pprint(pd)
             all_pds.append(
                 ScaleIO_Protection_Domain.from_dict(pd)
             )
@@ -724,7 +695,6 @@ class ScaleIO(SIO_Generic_Object):
 
     def get_volume_by_name(self, name):
         for vol in self.volumes:
-            #print "vol.name = " + vol.name
             if vol.name == name:
                 return vol
         raise KeyError("Volume with that NAME not found")
@@ -789,19 +759,14 @@ class ScaleIO(SIO_Generic_Object):
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
-
-        #print "Vol size: " + self.is_valid_volsize(volSizeInMb)
-
         if thinProvision:
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
         volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
-        #pprint(volumeDict)
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
-            print "Map created volume to SDC(s)"
             for key, value in kwargs.iteritems():
                 if key == 'mapAll':
                     if value == True:
