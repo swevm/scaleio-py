@@ -33,6 +33,13 @@ Initial code to test integration against ScaleIO API
 * IM integration to install new cluster
 * Add examples
 
+## v0.31 (WIP)
+* Create Snapshot by Volume Name
+* Create Snapshot by Volume Id
+* Delete Snapshot
+* Clean up API call methods. Now GET and POST calls happen in own methods and all other dependencies in the module uses same methods
+* Logging capabilities
+
 ## v0.3+
 * Unit Testing
 * Add SDS

@@ -61,6 +61,8 @@ stable before adding fancy functionality.
 ### Connect to ScaleIO API
 ```
 from scaleio-py import scaleio
+# Logging level can be change by adjusting level=[DEBUG, ERROR, WARNING, INFO]]
+logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
 sio = scaleio.ScaleIO("https://192.168.50.12/api","admin","Scaleio123",verify_ssl=False)
 ```
 
@@ -120,6 +122,19 @@ sio.unmap_volume_from_sdc(sio.get_volume_by_name('testvol'), sio.get_sdc_by_id('
 ```
 #Delete Volume
 sio.delete_volume(sio.get_volume_by_name('testvol'), 'ONLY_ME')
+```
+
+#### Create Snapshot of Volume
+```
+snapSpec = scaleio.SnapshotSpecification()
+snapSpec.addVolume(sio.get_volume_by_name('volume_name'))
+sio.create_snapshot(sio.get_system_id(), snapSpec)
+```
+
+#### Delete Snapshot
+```
+# Consistency group Id can be found by parsing result from get_volume_by_name().
+sio.delete_snapshot(sio.get_system_id(), 'consistency_group_id')
 ```
 
 ### Install ScaleIO using IM API
