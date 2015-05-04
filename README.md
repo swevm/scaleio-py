@@ -60,7 +60,7 @@ Have a look in examples directory for complete code examples.
 
 ### Connect to ScaleIO API
 ```
-from scaleio-py import scaleio
+from scaleiopy import scaleio
 # Logging level can be change by adjusting level=[DEBUG, ERROR, WARNING, INFO]]
 logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
 sio = scaleio.ScaleIO("https://192.168.50.12/api","admin","Scaleio123",verify_ssl=False)
