@@ -668,12 +668,12 @@ class ScaleIO(SIO_Generic_Object):
         else:
             raise ValueError("Malformed IP address - get_sdc_by_ip()")
     
-    def get_sdc_for_volume(self, volObj):
-        sdcList = []
-        for sdc in volObj.mapped_sdcs:
-            sdcList.append(sdc)
-        #if len(sdcList) == 0:
-        return sdcList
+     def get_sdc_for_volume(self, volObj):
+         sdcList = []
+         if volObj.mapped_sdcs is not None:
+            for sdc in volObj.mapped_sdcs:
+                 sdcList.append(sdc)
+         return sdcList
     
     def get_pd_by_name(self, name):
         for pd in self.protection_domains:
