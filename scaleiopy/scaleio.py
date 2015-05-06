@@ -632,7 +632,7 @@ class ScaleIO(SIO_Generic_Object):
         raise KeyError("Storage Pool with that ID not found")
 
     def get_sds_by_ip(self,ip):
-        if is_ip_addr(ip):
+        if self.is_ip_addr(ip):
             for sds in self.sds:
                 for sdsIp in sds.ipList:
                     if sdsIp == ip:
@@ -660,7 +660,7 @@ class ScaleIO(SIO_Generic_Object):
         raise KeyError("SDC with that ID not found")
 
     def get_sdc_by_ip(self, ip):
-        if is_ip_addr(ip):
+        if self.is_ip_addr(ip):
             for sdc in self.sdc:
                 if sdc.sdcIp == ip:
                     return sdc
@@ -872,7 +872,7 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'), json=unmapVolumeFromSdcDict)    
         return response
     
-    def is_ip_addr(ipstr):
+    def is_ip_addr(self, ipstr):
         """
         Convenience method to verify if string is an IP addr?
         :param ipstr: Stinrg containing IP address
