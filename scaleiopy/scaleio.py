@@ -444,7 +444,6 @@ class ScaleIO(SIO_Generic_Object):
         self.logger.debug("Logger initialized!")
 
     def _login(self):
-        print "*** DEBUG Login() ***"
         self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
         self.logger.debug("With credentials " + "{}/{}".format(self._username, self._password))
         login_response = self._session.get(
@@ -673,8 +672,9 @@ class ScaleIO(SIO_Generic_Object):
         if volObj.mapped_sdcs is not None:
             for sdc in volObj.mapped_sdcs:
                 sdcList.append(sdc)
-        return sdcList
-    
+            return sdcList
+        raise KeyError("No SDC mapped to Volume - " + volObj.id)
+
     def get_pd_by_name(self, name):
         for pd in self.protection_domains:
             if pd.name == name:
