@@ -673,7 +673,7 @@ class ScaleIO(SIO_Generic_Object):
         if volObj.mapped_sdcs is not None:
             for sdc in volObj.mapped_sdcs:
                 sdcList.append(sdc)
-         return sdcList
+        return sdcList
     
     def get_pd_by_name(self, name):
         for pd in self.protection_domains:
