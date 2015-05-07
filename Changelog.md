@@ -37,8 +37,14 @@ Initial code to test integration against ScaleIO API
 * Create Snapshot by Volume Name
 * Create Snapshot by Volume Id
 * Delete Snapshot
+* Expand Volume
 * Clean up API call methods. Now GET and POST calls happen in own methods and all other dependencies in the module uses same methods
 * Logging capabilities
+* Create ProtectionDomain (WIP)
+* Delete ProtectionDomain (WIP)
+* Create FaultSet (WIP)
+* Delete FaultSet (WIP)
+
 
 ## v0.3+
 * Unit Testing
