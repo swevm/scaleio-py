@@ -788,7 +788,7 @@ class ScaleIO(SIO_Generic_Object):
         current_vol = self.get_volume_by_id(volumeObj.id)
         if current_vol.size_kb > (sizeInGb * bsize * bsize):
             raise RuntimeError(
-                "resize_volume() - New size needs to be bigger than: %ds" % current_vol.sizeInKb )
+                "resize_volume() - New size needs to be bigger than: %d KBs" % current_vol.size_kb)
         
         resizeDict = { 'sizeInGB' : str(sizeInGb) }
         response = self._do_post("{}/{}{}/{}".format(
