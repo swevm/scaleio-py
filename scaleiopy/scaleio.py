@@ -780,6 +780,20 @@ class ScaleIO(SIO_Generic_Object):
                                     else:
                                         self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
         return response
+        
+    def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
+        """
+        Resize a volume to new GB size, must be larger than original.
+        """
+        current_vol = self.get_volume_by_id(volumeObj.id)
+        if current_vol.size_kb > (sizeInGb * bsize * bsize):
+            raise RuntimeError(
+                "resize_volume() - New size needs to be bigger than: %d KBs" % current_vol.size_kb)
+        
+        resizeDict = { 'sizeInGB' : str(sizeInGb) }
+        response = self._do_post("{}/{}{}/{}".format(
+            self._api_url, "instances/Volume::", volumeObj.id, 'action/setVolumeSize'), json=resizeDict)
+        return response
 
     def map_volume_to_sdc(self, volumeObj, sdcObj=None, allowMultipleMappings=False, **kwargs):
         # TODO:
