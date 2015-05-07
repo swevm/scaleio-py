@@ -786,7 +786,7 @@ class ScaleIO(SIO_Generic_Object):
         Resize a volume to new GB size, must be larger than original.
         """
         current_vol = self.get_volume_by_id(volumeObj.id)
-        if current_vol.sizeInKb > (sizeInGb * bsize * bsize):
+        if current_vol.size_kb > (sizeInGb * bsize * bsize):
             raise RuntimeError(
                 "resize_volume() - New size needs to be bigger than: %ds" % current_vol.sizeInKb )
         
