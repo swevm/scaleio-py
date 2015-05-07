@@ -790,7 +790,7 @@ class ScaleIO(SIO_Generic_Object):
             raise RuntimeError(
                 "resize_volume() - New size needs to be bigger than: %ds" % current_vol.sizeInKb )
         
-        resizeDict = { 'sizeInGB' : sizeInGb }
+        resizeDict = { 'sizeInGB' : str(sizeInGb) }
         response = self._do_post("{}/{}{}/{}".format(
             self._api_url, "instances/Volume::", volumeObj.id, 'action/setVolumeSize'), json=resizeDict)
         return response
