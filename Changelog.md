@@ -28,7 +28,7 @@ Initial code to test integration against ScaleIO API
 * Auto unmap of SDC when deleting volume that have existing mappings
 * Error checking (basics) - Might be pushed to v0.3+
 * Make naming of methods and attributes consistent (match to ScaleIO API documentation) - Might be pushed to v0.3+
-* Statistics gathering (maybe in 0.3+)
+* Statistics gathering (maybe in 0.3+ likely 0.4)
 * Add a changelog
 * IM integration to install new cluster
 * Add examples
@@ -44,6 +44,8 @@ Initial code to test integration against ScaleIO API
 * Delete ProtectionDomain (WIP)
 * Create FaultSet (WIP)
 * Delete FaultSet (WIP)
+* set name functionality for FS, PD, SDC and SDS
+* 
 
 
 ## v0.3+

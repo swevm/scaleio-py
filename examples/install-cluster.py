@@ -52,6 +52,9 @@ remoteSyslogConfiguration = None # {'remoteSysogConfiguration':'None'}
 #Create SDS objects - To be added to SDS list in System_Object #
 ################################################################
 # Adjust addDevice() to match local block device you have in your node
+# Define SDS that belong to a FaultSet - Not tested!
+#sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', 'faultset1', node1.nodeIPs, None, None, None, False, '7072')
+
 sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', None, node1.nodeIPs, None, None, None, False, '7072')
 sds1.addDevice("/home/vagrant/scaleio1", None, None)
 sds2 = sioobj.Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', None, node2.nodeIPs, None, None, None, False, '7072')

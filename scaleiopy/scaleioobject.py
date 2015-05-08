@@ -183,7 +183,8 @@ class Sdc_Object(Im_Generic_Object):
 
 class Sds_Device_Object(Im_Generic_Object):
     """
-    Python object representation of a MDM (primary or secondary look eactly the same configuration wise).
+    Python object representation of a SDS Device
+
     """
     
     def __init__(self,
@@ -206,6 +207,8 @@ class Sds_Device_Object(Im_Generic_Object):
 class Sds_Object(Im_Generic_Object):
     """
     Python object representation of a SDS.
+    To add a SDS to a faultset this is where its done. SDSs cannot be added to FaultSets after they have been added to protectiondomain. API wise they can be removed and re added (not sure how re-add is done though)
+    
     """
     
     def __init__(self,
@@ -225,7 +228,7 @@ class Sds_Object(Im_Generic_Object):
         self.nodeInfo=nodeInfo
         self.sdsName=sdsName
         self.protectionDomain = protectionDomain
-        self.faultSet=faultSet
+        self.faultSet=faultSet # Is this as easy as giving a string with a Faultset name??? (Its not documented)
         self.allIPs=[]
         for allIp in allIPs:
             self.allIPs.append(allIp)
