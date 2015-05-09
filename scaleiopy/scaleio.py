@@ -345,12 +345,16 @@ class ScaleIO_Fault_Set(SIO_Generic_Object):
     def __init__(self,
         id=None,
         name=None,
-        protectionDomainId=None
+        protectionDomainId=None,
+        links=None
 
     ):
         self.id=id
         self.name=name
         self.protectionDomainId=protectionDomainId
+        self.links = []
+        for link in links:
+            self.links.append(Link(link['href'],link['rel']))
 
     @staticmethod
     def from_dict(dict):
@@ -640,9 +644,9 @@ class ScaleIO(SIO_Generic_Object):
         self._check_login()
         response = self._do_get("{}/{}".format(self._api_url, "types/FaultSet/instances")).json()
         all_faultsets = []
-        for fss in response:
+        for fs in response:
             all_faultsets.append(
-                ScaleIO_Fault_Set.from_dict(pd)
+                ScaleIO_Fault_Set.from_dict(fs)
             )
         return all_faultsets
 
@@ -651,8 +655,7 @@ class ScaleIO(SIO_Generic_Object):
     
     def get_system_id(self):
         return self.system[0].id
-        
-        
+           
     def get_sds_in_faultset(self, faultSetObj):
         """
         :rtype: list of SDS in specified Faultset
@@ -758,7 +761,7 @@ class ScaleIO(SIO_Generic_Object):
             return True
         return False
     
-    def get_faultset_by_id(self,id):
+    def get_faultset_by_id(self, id):
         for fs in self.fault_sets:
             if fs.id == id:
                 return fs
@@ -770,20 +773,30 @@ class ScaleIO(SIO_Generic_Object):
                 return fs
         raise KeyError("FaultSet with NAME " + name + " not found")
     
-    def get_snapshot_by_vol_name(self, volObj):
+    def get_snapshot_by_vol_name(self, volname):
         pass
     
-    def get_snapshot_by_vol_id(self, volObj):
+    def get_snapshot_by_vol_id(self, volid):
         pass
+    
+    """
+    Not fully implemented yet
+    def get_snapshot_tree_by_volume(self, volObj):
+        for snapshot in self.snapshots:
+            if snapshot.name == name:
+                return snapshot
+        raise KeyError("Snapshot with parent volume NAME " + volObj.name + " not found")
+    
     
     def get_snapshots(self, systemObj):
         pass
     
-    def get_snapshot_group_id_by_vol_name(self, volObj):
+    def get_snapshot_group_id_by_vol_name(self, volname):
         pass
     
-    def get_snapshot_group_id_by_vol_id(self, volObj):
+    def get_snapshot_group_id_by_vol_id(self, volid):
         pass
+    """
     
     def create_protection_domain(self, pdObj, **kwargs):
         # TODO:
@@ -842,7 +855,7 @@ class ScaleIO(SIO_Generic_Object):
         return response
     
     def create_volume_by_pd_name(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO:
+        # TODO: REMOVE - Replace byt create_volume()
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
         if thinProvision:
@@ -866,7 +879,36 @@ class ScaleIO(SIO_Generic_Object):
                                     else:
                                         self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
         return response
-        
+
+    """
+    Use create_volume_by_pd() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
+    """
+    def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
+        # TODO: CHANGE NAME TO create_volume()
+        # Check if object parameters are the correct ones, otherwise throw error
+        self._check_login()    
+        if thinProvision:
+            volType = 'ThinProvisioned'
+        else:
+            volType = 'ThickProvisioned'
+        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
+
+        if kwargs:
+            for key, value in kwargs.iteritems():
+                if key == 'mapAll':
+                    if value == True:
+                        self.map_volume_to_sdc(self.get_volume_by_name(volName), mapAll=True)
+                if key == 'mapToSdc':
+                    if value:
+                        for innerKey, innerValue in kwargs.iteritems():
+                            if innerKey == 'mapAll':
+                                    if innerValue == True:
+                                        self.map_volume_to_sdc(self.get_volume_y_name(volName), mapAll=True)
+                                    else:
+                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
+        return response
+
     def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
         """
         Resize a volume to new GB size, must be larger than original.
