@@ -55,11 +55,11 @@ remoteSyslogConfiguration = None # {'remoteSysogConfiguration':'None'}
 # Define SDS that belong to a FaultSet - Not tested!
 #sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', 'faultset1', node1.nodeIPs, None, None, None, False, '7072')
 
-sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', None, node1.nodeIPs, None, None, None, False, '7072')
+sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', 'faultset1', node1.nodeIPs, None, None, None, False, '7072')
 sds1.addDevice("/home/vagrant/scaleio1", None, None)
-sds2 = sioobj.Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', None, node2.nodeIPs, None, None, None, False, '7072')
+sds2 = sioobj.Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', 'faultset2', node2.nodeIPs, None, None, None, False, '7072')
 sds2.addDevice("/home/vagrant/scaleio1", None, None)
-sds3 = sioobj.Sds_Object(json.loads(node3.to_JSON()), None, 'SDS_' + str(node3.nodeIPs[0]), 'default', None, node3.nodeIPs, None, None, None, False, '7072')
+sds3 = sioobj.Sds_Object(json.loads(node3.to_JSON()), None, 'SDS_' + str(node3.nodeIPs[0]), 'default', 'faultset3', node3.nodeIPs, None, None, None, False, '7072')
 sds3.addDevice("/home/vagrant/scaleio1", None, None)
 sdsList.append(json.loads(sds1.to_JSON()))
 sdsList.append(json.loads(sds2.to_JSON()))

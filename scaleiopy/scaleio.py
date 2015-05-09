@@ -338,6 +338,31 @@ class ScaleIO_SDS(SIO_Generic_Object):
         JSON response from the server.
         """
         return ScaleIO_SDS(**dict)
+ 
+class ScaleIO_Fault_Set(SIO_Generic_Object):
+    """ ScaleIO Faultset Class repreentation """
+    
+    def __init__(self,
+        id=None,
+        name=None,
+        protectionDomainId=None,
+        links=None
+
+    ):
+        self.id=id
+        self.name=name
+        self.protectionDomainId=protectionDomainId
+        self.links = []
+        for link in links:
+            self.links.append(Link(link['href'],link['rel']))
+
+    @staticmethod
+    def from_dict(dict):
+        """
+        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        JSON response from the server.
+        """
+        return ScaleIO_Fault_Set(**dict)
     
 class SnapshotSpecification(SIO_Generic_Object):
     """
@@ -595,7 +620,7 @@ class ScaleIO(SIO_Generic_Object):
     @property
     def protection_domains(self):
         """
-        :rtype: list
+        :rtype: list of Protection Domains
         """
         self._check_login()
         response = self._do_get("{}/{}".format(self._api_url, "types/ProtectionDomain/instances")).json()
@@ -606,11 +631,43 @@ class ScaleIO(SIO_Generic_Object):
             )
         return all_pds
 
+    @property
+    def fault_sets(self):
+        """
+        :rtype: list of Faultsets
+        
+        
+        You can only create and configure Fault Sets before adding SDSs to the system, and configuring them incorrectly
+        may prevent the creation of volumes. An SDS can only be added to a Fault Set during the creation of the SDS.
+
+        """
+        self._check_login()
+        response = self._do_get("{}/{}".format(self._api_url, "types/FaultSet/instances")).json()
+        all_faultsets = []
+        for fs in response:
+            all_faultsets.append(
+                ScaleIO_Fault_Set.from_dict(fs)
+            )
+        return all_faultsets
+
     def get_system_objects(self):
         return self.system
     
     def get_system_id(self):
         return self.system[0].id
+           
+    def get_sds_in_faultset(self, faultSetObj):
+        """
+        :rtype: list of SDS in specified Faultset
+        """
+        self._check_login()
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'types/FaultSet::', faultSetObj.id, 'relationships/Sds')).json()
+        all_sds = []
+        for fss in response:
+            all_sds.append(
+                ScaleIO_SDS.from_dict(pd)
+            )
+        return all_sds        
         
     def get_sds_by_name(self,name):
         for sds in self.sds:
@@ -679,45 +736,87 @@ class ScaleIO(SIO_Generic_Object):
         for pd in self.protection_domains:
             if pd.name == name:
                 return pd
-        raise KeyError("Protection Domain of that name not found")
+        raise KeyError("Protection Domain NAME " + name + " not found")
 
     def get_pd_by_id(self, id):
         for pd in self.protection_domains:
             if pd.id == id:
                 return pd
-        raise KeyError("Protection Domain with that ID not found")
+        raise KeyError("Protection Domain with ID " + id + " not found")
     
     def get_volume_by_id(self, id):
         for vol in self.volumes:
             if vol.id == id:
                 return vol
-        raise KeyError("Volume with that ID not found")
+        raise KeyError("Volume with ID " + id + " not found")
 
     def get_volume_by_name(self, name):
         for vol in self.volumes:
             if vol.name == name:
                 return vol
-        raise KeyError("Volume with that NAME not found")
+        raise KeyError("Volume with NAME " + name + " not found")
     
     def get_volume_all_sdcs_mapped(self, volObj):
         if volObj.mappingToAllSdcsEnabled == True:
             return True
         return False
     
-    def get_snapshot_by_vol_name(self, volObj):
+    def get_faultset_by_id(self, id):
+        for fs in self.fault_sets:
+            if fs.id == id:
+                return fs
+        raise KeyError("FaultSet with ID " + id + " not found")
+
+    def get_faultset_by_name(self,name):
+        for fs in self.fault_sets:
+            if fs.name == name:
+                return fs
+        raise KeyError("FaultSet with NAME " + name + " not found")
+    
+    def get_snapshot_by_vol_name(self, volname):
         pass
     
-    def get_snapshot_by_vol_id(self, volObj):
+    def get_snapshot_by_vol_id(self, volid):
         pass
+    
+    """
+    Not fully implemented yet
+    def get_snapshot_tree_by_volume(self, volObj):
+        for snapshot in self.snapshots:
+            if snapshot.name == name:
+                return snapshot
+        raise KeyError("Snapshot with parent volume NAME " + volObj.name + " not found")
+    
     
     def get_snapshots(self, systemObj):
         pass
     
-    def get_snapshot_group_id_by_vol_name(self, volObj):
+    def get_snapshot_group_id_by_vol_name(self, volname):
         pass
     
-    def get_snapshot_group_id_by_vol_id(self, volObj):
+    def get_snapshot_group_id_by_vol_id(self, volid):
         pass
+    """
+    
+    def create_protection_domain(self, pdObj, **kwargs):
+        # TODO:
+        # Check if object parameters are the correct ones
+        self._check_login()    
+        response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=pdObj.__to_dict__()())
+        return response
+    
+    def delete_potection_domain(self, pdObj):
+        """
+        :param pdObj: ID of ProtectionDomain
+        
+        type: POST
+        Required:
+            Protection Domain Object
+        Return:
+        """
+        self._check_login()
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/ProtectionDomain::", pdObj.id, 'action/removeProtectionDomain'))
+        return response
     
     def create_snapshot(self, systemId, snapshotSpecificationObject):
         """
@@ -756,7 +855,7 @@ class ScaleIO(SIO_Generic_Object):
         return response
     
     def create_volume_by_pd_name(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO:
+        # TODO: REMOVE - Replace byt create_volume()
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
         if thinProvision:
@@ -780,7 +879,36 @@ class ScaleIO(SIO_Generic_Object):
                                     else:
                                         self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
         return response
-        
+
+    """
+    Use create_volume_by_pd() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
+    """
+    def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
+        # TODO: CHANGE NAME TO create_volume()
+        # Check if object parameters are the correct ones, otherwise throw error
+        self._check_login()    
+        if thinProvision:
+            volType = 'ThinProvisioned'
+        else:
+            volType = 'ThickProvisioned'
+        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
+
+        if kwargs:
+            for key, value in kwargs.iteritems():
+                if key == 'mapAll':
+                    if value == True:
+                        self.map_volume_to_sdc(self.get_volume_by_name(volName), mapAll=True)
+                if key == 'mapToSdc':
+                    if value:
+                        for innerKey, innerValue in kwargs.iteritems():
+                            if innerKey == 'mapAll':
+                                    if innerValue == True:
+                                        self.map_volume_to_sdc(self.get_volume_y_name(volName), mapAll=True)
+                                    else:
+                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
+        return response
+
     def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
         """
         Resize a volume to new GB size, must be larger than original.
@@ -860,31 +988,70 @@ class ScaleIO(SIO_Generic_Object):
             raise RuntimeError("delete_volume() - Communication error with ScaleIO Gateway")
         return response
     
- 
-    def delete_sdc_from_cluster(self, sdcObj):
-        # TODO:
+    """
+    def delete_sdc_from_cluster(self, sdcObj): 
+        # DEPRECEATED
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login() 
         response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'))    
         return response  
+    """
+    
+    def set_sds_name(self, name, sdsObj):
+        # TODO:
+        # Check if object parameters are the correct type, otherwise throw error
+        # UNSURE IF THIS IS CORRECT WAY TO SET SDS NAME
+        self._check_login()
+        sdsNameDict = {'sdsName': name}
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sds::", sdcObj.id, 'action/setSdsName'), json=sdsNameDict)    
+        return response
 
     def set_sdc_name(self, name, sdcObj):
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()
-        deleteVolumeDict = {'sdcName': name}
-        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/setSdcName'), json=unmapVolumeFromSdcDict)    
+        sdcNameDict = {'sdcName': name}
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/setSdcName'), json=sdcNameDict)    
         return response
-    
-    #def set_volume_map_to_all_sdcs(self, volObj, enabled=False):
-    #    self._check_login()
-    # Research: Can there still exsit individual SDC mappings? API Guide say nothing about it.
-    #    return self.map_volume_to_sdc(volobj, mapAll=True)
+
+    def set_faultset_name(self, name, fsObj):
+        # Set name of FaultSet
+        self._check_login()
+        faultSetNameDict = {'Name': name}
+        # This one is the most logical name comparing to other methods.
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "types/FaultSet::", fsObj.id, 'instances/action/setFaultSetName'), json=faultSetNameSdcDict)    
+
+        # This is how its documened in REST API Chapter
+        #response = self._do_post("{}/{}{}/{}".format(self._api_url, "types/FaultSet::", fsObj.id, 'instances/action/setFaultSetName'), json=faultsetNameSdcDict)    
+        return response    
     
     def unregisterSdc(self, sdcObj):
         self._check_login()
-        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'), json=unmapVolumeFromSdcDict)    
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'))    
         return response
+
+    def registerSdc(self, sdcObj, **kwargs):
+        # Register existing SDS running SDS binary (need to be installed manually but not added to MDM)
+        # 
+        self._check_login()    
+
+        response = self._do_post("{}/{}".format(self._api_url, "types/Sdc/instances"), json=sdcObj.__to_dict__())
+        return response
+
+    def unregisterSds(self, sdsObj):
+        self._check_login()
+        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sds::", sdsObj.id, 'action/removeSds'))    
+        return response    
+    
+    # /api/types/Sds/instance s
+    def registerSds(self, sdsObj, **kwargs):
+        # Register existing SDS running SDS binary (need to be installed manually but not added to MDM)
+        # 
+        self._check_login()    
+
+        response = self._do_post("{}/{}".format(self._api_url, "types/Sds/instances"), json=sdsObj.__to_dict__())
+        return response
+    
     
     def is_ip_addr(self, ipstr):
         """
