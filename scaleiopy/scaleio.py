@@ -756,8 +756,12 @@ class ScaleIO(SIO_Generic_Object):
         if volObj.mapped_sdcs is not None:
             for sdc in volObj.mapped_sdcs:
                 sdcList.append(sdc)
-            return sdcList
-        raise KeyError("No SDC mapped to Volume - " + volObj.id)
+        if len(sdcList) == 0:
+            self.logger.debug("No SDCs mapped to volume: %s-(%s)" %
+                                (volObj.name, volObj.id))
+        # returning an empty list is
+        # valid for snapshots or volumes.
+        return sdcList
 
     def get_pd_by_name(self, name):
         for pd in self.protection_domains:
