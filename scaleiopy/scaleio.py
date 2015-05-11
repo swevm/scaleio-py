@@ -441,7 +441,7 @@ class ScaleIO(SIO_Generic_Object):
     * GET storagepools, systemobject, protectiondomains, sdc, sdc, volumes
 
     """
-    def __init__(self, api_url, username, password, verify_ssl=False):
+    def __init__(self, api_url, username, password, verify_ssl=False, debugLevel=None):
         """
         Initializes the class
 
@@ -464,9 +464,36 @@ class ScaleIO(SIO_Generic_Object):
         self._verify_ssl = verify_ssl
         self._logged_in = False
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
-        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
+        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
+            level=self._get_log_level(debugLevel))
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
+
+    @staticmethod
+    def _get_log_level(level):
+        """
+        small static method to get logging level
+        :param str level: string of the level e.g. "INFO"
+        :returns logging.<LEVEL>: appropriate debug level
+        """
+        # default to DEBUG
+        if level is None or level == "DEBUG":
+            return logging.DEBUG
+
+        level = level.upper()
+        # Make debugging configurable
+        if level == "INFO":
+            return logging.INFO
+        elif level == "WARNING":
+            return logging.WARNING
+        elif level == "CRITICAL":
+            return logging.CRITICAL
+        elif level == "ERROR":
+            return logging.ERROR
+        elif level == "FATAL":
+            return logging.FATAL
+        else:
+            raise Exception("UnknownLogLevelException: enter a valid log level")
 
     def _login(self):
         self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
