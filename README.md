@@ -12,7 +12,7 @@ Requirements:
 * ScaleIO 1.3 or 1.31 installation with REST API Gateway configured (note, the [Vagrantfile](https://github.com/virtualswede/vagrant-scaleio) from @virtualswede works fine to deploy ScaleIO with for development and testing)
 
 ## Module status
-Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm ScaleIO-py is in late Alpha stage and focus will be on getting basic features become stable (especially the to/from object mapping) before adding fancy functionality. 
+Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm ScaleIO-py is in early beta stage and focus will be on getting basic features become stable (especially the to/from object mapping) before adding fancy functionality. 
 
 
 ## Installation
@@ -26,7 +26,8 @@ Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm Scale
 * Get list of SDS objects
 * Get list of SDC objects
 * Get list of Protection Domain objects
-* Get list of Volume Objects
+* Get list of Volume objects
+* Get lsit of Fault Set objects
 * Get list of Storage Pool objects
 * Get list of System objects
 * Get volume by id or name
@@ -43,6 +44,8 @@ Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm Scale
 * Map Volume to all SDCs
 * Unmap Volume from SDC
 * Install new ScaleIO cluster (binaries and basic configuration using IM API)
+* Create Faultset
+* Create Volume snapshot
 
 ### Delete
 * Delete Volume
@@ -61,9 +64,8 @@ Have a look in examples directory for complete code examples.
 ### Connect to ScaleIO API
 ```
 from scaleiopy import scaleio
-# Logging level can be change by adjusting level=[DEBUG, ERROR, WARNING, INFO]]
-logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.DEBUG)
-sio = scaleio.ScaleIO("https://192.168.50.12/api","admin","Scaleio123",verify_ssl=False)
+# Logging level can be change by adjusting last parameter [DEBUG, FATAL, ERROR, CRITICAL, WARNING, INFO]. If left out of class init DEBUG is assumed
+sio = scaleio.ScaleIO("https://192.168.50.12/api","admin","Scaleio123",False, "ERROR)
 ```
 
 #### Get a list of all attributes related to each SDC known by your ScaleIO cluster

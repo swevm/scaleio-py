@@ -40,6 +40,7 @@ Initial code to test integration against ScaleIO API
 * Expand Volume
 * Clean up API call methods. Now GET and POST calls happen in own methods and all other dependencies in the module uses same methods
 * Logging capabilities
+* Update examples to use new logging facility
 * Create ProtectionDomain (WIP)
 * Delete ProtectionDomain (WIP)
 * Create FaultSet (WIP)
