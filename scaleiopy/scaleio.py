@@ -339,6 +339,37 @@ class ScaleIO_SDS(SIO_Generic_Object):
         """
         return ScaleIO_SDS(**dict)
  
+
+"""
+id
+name
+baseVolumeId
+storagePoolId
+"""
+
+class ScaleIO_Vtree(SIO_Generic_Object):
+    """ ScaleIO VTree Class repreentation """
+    
+    def __init__(self,
+        id=None,
+        name=None,
+        baseVolumeId=None,
+        storagePoolId=None
+    ):
+        self.id=id
+        self.name=name
+        self.baseVolumeId=baseVolumeId
+        self.storagePoolId=storagePoolId
+        
+    @staticmethod
+    def from_dict(dict):
+        """
+        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        JSON response from the server.
+        """
+        return ScaleIO_Vtree(**dict)
+
+
 class ScaleIO_Fault_Set(SIO_Generic_Object):
     """ ScaleIO Faultset Class repreentation """
     
@@ -674,6 +705,24 @@ class ScaleIO(SIO_Generic_Object):
             )
         return all_faultsets
 
+    @property
+    def vtrees(self):
+        """
+        Get list of VTrees from ScaleIO cluster
+        :return: List of VTree objects - Can be empty of no VTrees exist
+        :rtype: VTree object
+        """
+        self._check_login()
+        response = self._do_get("{}/{}".format(self._api_url, "types/VTree/instances")).json()
+        all_vtrees = []
+        for vtree in response:
+            all_vtrees.append(
+                ScaleIO_Vtree.from_dict(fs)
+            )
+        return all_vtrees
+
+
+
     def get_system_objects(self):
         return self.system
     
@@ -862,6 +911,22 @@ class ScaleIO(SIO_Generic_Object):
             if vol.id == id:
                 return vol
         raise KeyError("Volume with ID " + id + " not found")
+    
+    def get_volumes_for_vtree(self, vtreeObj):
+        """
+        :param vtreeObj: VTree object
+            Protection Domain Object
+        :return: list of Volumes attached to VTree
+        :rtyoe: ScaleIO Volume object
+        """
+        self._check_login()
+        all_volumes = []
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'types/VTree::', vtreeObj.id, 'relationships/Volume')).json()
+        for vtree_volume in response:
+            all_volumes.append(
+                ScaleIO_Volume.from_dict(fs)
+            )
+        return all_volumes
 
     def get_volume_by_name(self, name):
         """
@@ -892,6 +957,18 @@ class ScaleIO(SIO_Generic_Object):
             if fs.name == name:
                 return fs
         raise KeyError("FaultSet with NAME " + name + " not found")
+
+    def get_vtree_by_id(self,id):
+        for vtree in self.vtrees:
+            if vtree.id == id:
+                return vtree
+        raise KeyError("VTree with ID " + id + " not found")
+
+    def get_vtree_by_name(self,name):
+        for vtree in self.vtrees:
+            if vtree.name == name:
+                return vtree
+        raise KeyError("VTree with NAME " + name + " not found")
     
     def get_snapshot_by_vol_name(self, volname):
         pass
