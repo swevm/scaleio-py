@@ -661,12 +661,9 @@ class ScaleIO(SIO_Generic_Object):
     @property
     def fault_sets(self):
         """
-        :rtype: list of Faultsets
-        
-        
         You can only create and configure Fault Sets before adding SDSs to the system, and configuring them incorrectly
         may prevent the creation of volumes. An SDS can only be added to a Fault Set during the creation of the SDS.
-
+        :rtype: list of Faultset objects
         """
         self._check_login()
         response = self._do_get("{}/{}".format(self._api_url, "types/FaultSet/instances")).json()
@@ -685,6 +682,8 @@ class ScaleIO(SIO_Generic_Object):
            
     def get_sds_in_faultset(self, faultSetObj):
         """
+        Get list of SDS objects attached to a specific ScaleIO Faultset
+        :param faultSetObj: ScaleIO Faultset object
         :rtype: list of SDS in specified Faultset
         """
         self._check_login()
@@ -697,24 +696,52 @@ class ScaleIO(SIO_Generic_Object):
         return all_sds        
         
     def get_sds_by_name(self,name):
+        """
+        Get ScaleIO SDS object by its name
+        :param name: Name of SDS
+        :return: ScaleIO SDS object
+        :raise KeyError: No SDS with specified name found
+        :rtype: SDS object
+        """
         for sds in self.sds:
             if sds.name == name:
                 return sds
         raise KeyError("SDS of that name not found")
 
     def get_storage_pool_by_name(self, name):
+        """
+        Get ScaleIO StoragePool object by its name
+        :param name: Name of StoragePool
+        :return: ScaleIO StoragePool object
+        :raise KeyError: No StoragePool with specified name found
+        :rtype: StoragePool object
+        """
         for storage_pool in self.storage_pools:
             if storage_pool.name == name:
                 return storage_pool
         raise KeyError("Storage pool of that name not found")
 
     def get_storage_pool_by_id(self, id):
+        """
+        Get ScaleIO SDS ofbject by its id
+        :param name: Name of StoragePool
+        :return: ScaleIO StoraegPool object
+        :raise KeyError: No StoragePool with specified id found
+        :rtype: StoragePool object
+        """
         for storage_pool in self.storage_pools:
             if storage_pool.id == id:
                 return storage_pool
         raise KeyError("Storage Pool with that ID not found")
 
     def get_sds_by_ip(self,ip):
+        """
+        Get ScaleIO SDS object by its ip address
+        :param name: IP address of SDS
+        :return: ScaleIO SDS object
+        :raise KeyError: No SDS with specified ip found
+        :rtype: SDS object
+        """
         if self.is_ip_addr(ip):
             for sds in self.sds:
                 for sdsIp in sds.ipList:
@@ -725,24 +752,52 @@ class ScaleIO(SIO_Generic_Object):
             raise ValueError("Malformed IP address - get_sds_by_ip()")
         
     def get_sds_by_id(self,id):
+        """
+        Get ScaleIO SDS object by its id
+        :param name: ID of SDS
+        :return: ScaleIO SDS object
+        :raise KeyError: No SDS with specified id found
+        :rtype: SDS object
+        """
         for sds in self.sds:
             if sds.id == id:
                 return sds
         raise KeyError("SDS with that ID not found")
 
     def get_sdc_by_name(self, name):
+        """
+        Get ScaleIO SDC object by its name
+        :param name: Name of SDC
+        :return: ScaleIO SDC object
+        :raise KeyError: No SDC with specified name found
+        :rtype: SDC object
+        """
         for sdc in self.sdc:
             if sdc.name == name:
                 return sdc
         raise KeyError("SDC of that name not found")
 
     def get_sdc_by_id(self, id):
+        """
+        Get ScaleIO SDC object by its id
+        :param name: id of SDC
+        :return: ScaleIO SDC object
+        :raise KeyError: No SDC with specified id found
+        :rtype: SDC object
+        """
         for sdc in self.sdc:
             if sdc.id == id:
                 return sdc
         raise KeyError("SDC with that ID not found")
 
     def get_sdc_by_ip(self, ip):
+        """
+        Get ScaleIO SDC object by its ip
+        :param name: IP address of SDC
+        :return: ScaleIO SDC object
+        :raise KeyError: No SDC with specified IP found
+        :rtype: SDC object
+        """
         if self.is_ip_addr(ip):
             for sdc in self.sdc:
                 if sdc.sdcIp == ip:
@@ -752,6 +807,12 @@ class ScaleIO(SIO_Generic_Object):
             raise ValueError("Malformed IP address - get_sdc_by_ip()")
     
     def get_sdc_for_volume(self, volObj):
+        """
+        Get list of SDC mapped to a specific volume
+        :param volObj: ScaleIO volume object
+        :return: List of ScaleIO SDC objects (empty list if no mapping exist)
+        :rtype: SDC object
+        """
         sdcList = []
         if volObj.mapped_sdcs is not None:
             for sdc in volObj.mapped_sdcs:
@@ -764,24 +825,52 @@ class ScaleIO(SIO_Generic_Object):
         return sdcList
 
     def get_pd_by_name(self, name):
+        """
+        Get ScaleIO ProtectionDomain object by its name
+        :param name: Name of ProtectionDomain
+        :return: ScaleIO ProtectionDomain object
+        :raise KeyError: No ProtetionDomain with specified name found
+        :rtype: ProtectionDomain object
+        """
         for pd in self.protection_domains:
             if pd.name == name:
                 return pd
         raise KeyError("Protection Domain NAME " + name + " not found")
 
     def get_pd_by_id(self, id):
+        """
+        Get ScaleIO ProtectionDomain object by its id
+        :param name: ID of ProtectionDomain
+        :return: ScaleIO ProctectionDomain object
+        :raise KeyError: No ProtectionDomain with specified name found
+        :rtype: ProtectionDomain object
+        """
         for pd in self.protection_domains:
             if pd.id == id:
                 return pd
         raise KeyError("Protection Domain with ID " + id + " not found")
     
     def get_volume_by_id(self, id):
+        """
+        Get ScaleIO Volume object by its ID
+        :param name: ID of volume
+        :return: ScaleIO Volume object
+        :raise KeyError: No Volume with specified ID found
+        :rtype: ScaleIO Volume object
+        """
         for vol in self.volumes:
             if vol.id == id:
                 return vol
         raise KeyError("Volume with ID " + id + " not found")
 
     def get_volume_by_name(self, name):
+        """
+        Get ScaleIO Volume object by its Name
+        :param name: Name of volume
+        :return: ScaleIO Volume object
+        :raise KeyError: No Volume with specified name found
+        :rtype: ScaleIO Volume object
+        """
         for vol in self.volumes:
             if vol.name == name:
                 return vol
@@ -912,7 +1001,7 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     """
-    Use create_volume_by_pd() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
+    Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
     """
     def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
         # TODO: CHANGE NAME TO create_volume()
@@ -943,6 +1032,11 @@ class ScaleIO(SIO_Generic_Object):
     def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
         """
         Resize a volume to new GB size, must be larger than original.
+        :param volumeObj: ScaleIO Volume Object
+        :param sizeInGb: New size in GB (have to be larger than original)
+        :param bsize: 1000
+        :return: POST request response
+        :rtype: Requests POST response object
         """
         current_vol = self.get_volume_by_id(volumeObj.id)
         if current_vol.size_kb > (sizeInGb * bsize * bsize):
@@ -955,8 +1049,14 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     def map_volume_to_sdc(self, volumeObj, sdcObj=None, allowMultipleMappings=False, **kwargs):
-        # TODO:
-        # Check if object parameters are the correct ones, otherwise throw error
+        """
+        Map a Volume to SDC
+        :param volumeObj: ScaleIO Volume object
+        :param sdcObj: ScaleIO SDC object
+        :param allowMultipleMappings: True to allow more than one SDC to be mapped to volume
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         self._check_login()
         if kwargs:
             for key, value in kwargs.iteritems():
@@ -969,6 +1069,17 @@ class ScaleIO(SIO_Generic_Object):
         return response
     
     def unmap_volume_from_sdc(self, volObj, sdcObj=None, **kwargs):
+        """
+        Unmap a Volume from SDC or all SDCs
+        :param volObj: ScaleIO Volume object
+        :param sdcObj: ScaleIO SDC object
+        :param \**kwargs:
+        :Keyword Arguments:
+        *disableMapAllSdcs* (``bool``) -- True to disable all SDCs mapping
+        :return: POST request response
+        :rtype: Requests POST response object
+        :raise RuntimeError: If failure happen during communication with REST Gateway - Need to be cleaned up and made consistent to return understandable errors
+        """
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         # ADD logic for ALL SDC UNMAP
@@ -1019,16 +1130,14 @@ class ScaleIO(SIO_Generic_Object):
             raise RuntimeError("delete_volume() - Communication error with ScaleIO Gateway")
         return response
     
-    """
-    def delete_sdc_from_cluster(self, sdcObj): 
-        # DEPRECEATED
-        # Check if object parameters are the correct ones, otherwise throw error
-        self._check_login() 
-        response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'))    
-        return response  
-    """
-    
     def set_sds_name(self, name, sdsObj):
+        """
+        Set name for SDS
+        :param name: Name of SDS
+        :param sdsObj: ScaleIO SDS object
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         # TODO:
         # Check if object parameters are the correct type, otherwise throw error
         # UNSURE IF THIS IS CORRECT WAY TO SET SDS NAME
@@ -1038,6 +1147,13 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     def set_sdc_name(self, name, sdcObj):
+        """
+        Set name for SDC
+        :param name: Name of SDC
+        :param sdcObj: ScaleIO SDC object
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()
@@ -1046,6 +1162,13 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     def set_faultset_name(self, name, fsObj):
+        """
+        Set name for Faultset
+        :param name: Name of Faultset
+        :param fsObj: ScaleIO FS object
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         # Set name of FaultSet
         self._check_login()
         faultSetNameDict = {'Name': name}
@@ -1057,6 +1180,14 @@ class ScaleIO(SIO_Generic_Object):
         return response    
     
     def unregisterSdc(self, sdcObj):
+        """
+        Unregister SDC from MDM/SIO Cluster
+        :param sdcObj: ScaleIO SDC object
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
+        # TODO:
+        # Add code that unmap volume if mapped
         self._check_login()
         response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sdc::", sdcObj.id, 'action/removeSdc'))    
         return response
@@ -1070,19 +1201,30 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     def unregisterSds(self, sdsObj):
+        """
+        Unregister SDS from MDM/SIO Cluster
+        :param sdsObj: ScaleIO SDS objecty
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         self._check_login()
         response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Sds::", sdsObj.id, 'action/removeSds'))    
         return response    
     
     # /api/types/Sds/instance s
     def registerSds(self, sdsObj, **kwargs):
+        """
+        Register SDS with MDM/SIO Cluster
+        :param sdsObj: ScaleIO SDS object
+        :return: POST request response
+        :rtype: Requests POST response object
+        """
         # Register existing SDS running SDS binary (need to be installed manually but not added to MDM)
         # 
         self._check_login()    
 
         response = self._do_post("{}/{}".format(self._api_url, "types/Sds/instances"), json=sdsObj.__to_dict__())
         return response
-    
     
     def is_ip_addr(self, ipstr):
         """
@@ -1116,11 +1258,10 @@ class ScaleIO(SIO_Generic_Object):
             return int(volsize)
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)
     if len(sys.argv) == 1:
         print "Usage: scaleio.py mdm_ip user pass"
     else:
-        sio = ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2],sys.argv[3],verify_ssl=False) # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
+        sio = ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2],sys.argv[3],False,"DEBUG") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
         pprint(sio.system)
         pprint(sio.sdc)
         pprint(sio.sds)
