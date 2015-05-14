@@ -273,6 +273,7 @@ class ScaleIO_SDC(SIO_Generic_Object):
         self.name = name
         self.mdmConnectionState = mdmConnectionState
         self.sdcIp = sdcIp
+        self.guid = sdcGuid
         self.links = []
         for link in links:
             self.links.append(Link(link['href'], link['rel']))
@@ -789,6 +790,19 @@ class ScaleIO(SIO_Generic_Object):
             if sdc.id == id:
                 return sdc
         raise KeyError("SDC with that ID not found")
+
+    def get_sdc_by_guid(self, guid):
+        """
+        Get ScaleIO SDC object by its id
+        :param name: guid of SDC
+        :return: ScaleIO SDC object
+        :raise KeyError: No SDC with specified id found
+        :rtype: SDC object
+        """
+        for sdc in self.sdc:
+            if sdc.guid == guid:
+                return sdc
+        raise KeyError("SDC with that GUID not found")
 
     def get_sdc_by_ip(self, ip):
         """
