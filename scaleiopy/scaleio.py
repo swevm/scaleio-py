@@ -401,9 +401,12 @@ class SnapshotSpecification(SIO_Generic_Object):
     def __init__(self):
         self._snapshotList = []
     
-    def addVolume(self, volObj):
-        self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
-    
+    def addVolume(self, volObj, snapName=None):
+        if snapName is None:
+            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
+        else:
+            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": snapName})
+
     def removeVolume(self, volObj):
         pass
     
@@ -712,8 +715,6 @@ class ScaleIO(SIO_Generic_Object):
                 ScaleIO_Vtree.from_dict(fs)
             )
         return all_vtrees
-
-
 
     def get_system_objects(self):
         return self.system
