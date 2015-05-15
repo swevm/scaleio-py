@@ -22,7 +22,7 @@ class SIO_Generic_Object(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "<{}> @ {}:\n".format(self.get_class_name(), id(self)) + "\n".join(
@@ -32,7 +32,7 @@ class SIO_Generic_Object(object):
         return self.__str__()
 
 class ScaleIO_System(SIO_Generic_Object):
-    """ Represents one ScaleIO installation as a class object  - Owns other classes that represents differenct ScaleIO components """
+    """ Represents one ScaleIO cluster/installation as a class object  - Owns other classes that represents differenct ScaleIO components """
     
     def __init__(self,
         id=None,
@@ -100,7 +100,7 @@ class ScaleIO_System(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_System(**dict)
@@ -162,13 +162,13 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Storage_Pool(**dict)
 
 class ScaleIO_Protection_Domain(SIO_Generic_Object):
-    """ ScaleIO Protection Domain Class repreentation """
+    """ ScaleIO Protection Domain Class representation """
     
     def __init__(self,
         id=None,
@@ -201,7 +201,7 @@ class ScaleIO_Protection_Domain(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Protection_Domain(**dict)
@@ -249,7 +249,7 @@ class ScaleIO_Volume(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Volume(**dict)
@@ -282,7 +282,7 @@ class ScaleIO_SDC(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_SDC(**dict)
@@ -334,19 +334,11 @@ class ScaleIO_SDS(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_SDS(**dict)
  
-
-"""
-id
-name
-baseVolumeId
-storagePoolId
-"""
-
 class ScaleIO_Vtree(SIO_Generic_Object):
     """ ScaleIO VTree Class repreentation """
     
@@ -364,7 +356,7 @@ class ScaleIO_Vtree(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Vtree(**dict)
@@ -390,7 +382,7 @@ class ScaleIO_Fault_Set(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Fault_Set(**dict)
@@ -426,7 +418,7 @@ class IP_List(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "{} : IP: {} Role: {}".format("IP",self.ip,self.role)
@@ -441,7 +433,7 @@ class Link(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "{} : Target: '{}' Relative: '{}'".format("Link", self.href, self.rel)
@@ -556,7 +548,7 @@ class ScaleIO(SIO_Generic_Object):
     # FIX _do_get method, easier to have one place to do error handling than in all other methods that call _do_get()
     def _do_get(self, url, **kwargs):
         """
-        Convinient method for GET requests
+        Convenient method for GET requests
         Returns http request status value from a POST request
         """
         #TODO:
@@ -578,7 +570,7 @@ class ScaleIO(SIO_Generic_Object):
 
     def _do_post(self, url, **kwargs):
         """
-        Convinient method for POST requests
+        Convenient method for POST requests
         Returns http request status value from a POST request
         """
         #TODO:
