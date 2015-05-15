@@ -408,7 +408,10 @@ class SnapshotSpecification(SIO_Generic_Object):
             self._snapshotList.append({"volumeId": volObj.id, "snapshotName": snapName})
 
     def removeVolume(self, volObj):
-        pass
+        for i in (len(_snapshotList)):
+            if self._snapshotList[i]['volumeId'] == volObj.id:
+                del self._snapshotList[i]
+                break
     
     def __to_dict__(self):
         return {"snapshotDefs" : self._snapshotList}
