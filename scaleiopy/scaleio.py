@@ -340,19 +340,25 @@ class ScaleIO_SDS(SIO_Generic_Object):
         return ScaleIO_SDS(**dict)
  
 class ScaleIO_Vtree(SIO_Generic_Object):
-    """ ScaleIO VTree Class repreentation """
+    """ ScaleIO VTree Class repreentation
+        For every Volume created there alway at least one VTree
+    """
     
     def __init__(self,
         id=None,
         name=None,
         baseVolumeId=None,
-        storagePoolId=None
+        storagePoolId=None,
+        links=None
     ):
         self.id=id
         self.name=name
         self.baseVolumeId=baseVolumeId
         self.storagePoolId=storagePoolId
-        
+        self.links = []
+        for link in links:
+            self.links.append(Link(link['href'],link['rel']))
+            
     @staticmethod
     def from_dict(dict):
         """
@@ -715,7 +721,7 @@ class ScaleIO(SIO_Generic_Object):
         all_vtrees = []
         for vtree in response:
             all_vtrees.append(
-                ScaleIO_Vtree.from_dict(fs)
+                ScaleIO_Vtree.from_dict(vtree)
             )
         return all_vtrees
 
