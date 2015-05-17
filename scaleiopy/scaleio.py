@@ -1002,24 +1002,14 @@ class ScaleIO(SIO_Generic_Object):
                 return vtree
         raise KeyError("VTree with NAME " + name + " not found")
     
-    def get_snapshot_by_vol_name(self, volname):
-        pass
-    
-    def get_snapshot_by_vol_id(self, volid):
-        pass
+    def get_snapshots_by_vol(self, volObj):
+        all_snapshots_for_vol = []
+        for volume in self.get_volumes_for_vtree(self.get_vtree_by_id(volObj.vtree_id)):
+            if volume.ancestor_volume is not None:
+                 all_snapshots_for_vol.append(volume)
+        return all_snapshots_for_vol
     
     """
-    Not fully implemented yet
-    def get_snapshot_tree_by_volume(self, volObj):
-        for snapshot in self.snapshots:
-            if snapshot.name == name:
-                return snapshot
-        raise KeyError("Snapshot with parent volume NAME " + volObj.name + " not found")
-    
-    
-    def get_snapshots(self, systemObj):
-        pass
-    
     def get_snapshot_group_id_by_vol_name(self, volname):
         pass
     
