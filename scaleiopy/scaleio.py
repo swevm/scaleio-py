@@ -679,6 +679,22 @@ class ScaleIO(SIO_Generic_Object):
             )
         return all_volumes
 
+    @property
+    def snapshots(self):
+        """
+        Get all Volumes of type Snapshot.  Updates every time - no caching.
+        :return: a `list` of all the `ScaleIO_Volume` that have a are of type Snapshot.
+        :rtype: list
+        """
+        self._check_login()
+        response = self._do_get("{}/{}".format(self._api_url, "types/Volume/instances")).json()
+        all_volumes_snapshot = []
+        for volume in response:
+            if volume['volumeType'] == 'Snapshot':
+                all_volumes_snapshot.append(
+                    ScaleIO_Volume.from_dict(volume)
+            )
+        return all_volumes_snapshot
 
     @property
     def protection_domains(self):
@@ -937,10 +953,10 @@ class ScaleIO(SIO_Generic_Object):
         """
         self._check_login()
         all_volumes = []
-        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'types/VTree::', vtreeObj.id, 'relationships/Volume')).json()
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'instances/VTree::', vtreeObj.id, 'relationships/Volume')).json()
         for vtree_volume in response:
             all_volumes.append(
-                ScaleIO_Volume.from_dict(fs)
+                ScaleIO_Volume.from_dict(vtree_volume)
             )
         return all_volumes
 
