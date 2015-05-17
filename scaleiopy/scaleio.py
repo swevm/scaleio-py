@@ -22,7 +22,7 @@ class SIO_Generic_Object(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "<{}> @ {}:\n".format(self.get_class_name(), id(self)) + "\n".join(
@@ -32,7 +32,7 @@ class SIO_Generic_Object(object):
         return self.__str__()
 
 class ScaleIO_System(SIO_Generic_Object):
-    """ Represents one ScaleIO installation as a class object  - Owns other classes that represents differenct ScaleIO components """
+    """ Represents one ScaleIO cluster/installation as a class object  - Owns other classes that represents differenct ScaleIO components """
     
     def __init__(self,
         id=None,
@@ -100,7 +100,7 @@ class ScaleIO_System(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_System(**dict)
@@ -162,13 +162,13 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Storage_Pool(**dict)
 
 class ScaleIO_Protection_Domain(SIO_Generic_Object):
-    """ ScaleIO Protection Domain Class repreentation """
+    """ ScaleIO Protection Domain Class representation """
     
     def __init__(self,
         id=None,
@@ -201,7 +201,7 @@ class ScaleIO_Protection_Domain(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Protection_Domain(**dict)
@@ -249,7 +249,7 @@ class ScaleIO_Volume(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Volume(**dict)
@@ -283,7 +283,7 @@ class ScaleIO_SDC(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_SDC(**dict)
@@ -335,11 +335,40 @@ class ScaleIO_SDS(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_SDS(**dict)
  
+class ScaleIO_Vtree(SIO_Generic_Object):
+    """ ScaleIO VTree Class repreentation
+        For every Volume created there alway at least one VTree
+    """
+    
+    def __init__(self,
+        id=None,
+        name=None,
+        baseVolumeId=None,
+        storagePoolId=None,
+        links=None
+    ):
+        self.id=id
+        self.name=name
+        self.baseVolumeId=baseVolumeId
+        self.storagePoolId=storagePoolId
+        self.links = []
+        for link in links:
+            self.links.append(Link(link['href'],link['rel']))
+            
+    @staticmethod
+    def from_dict(dict):
+        """
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
+        JSON response from the server.
+        """
+        return ScaleIO_Vtree(**dict)
+
+
 class ScaleIO_Fault_Set(SIO_Generic_Object):
     """ ScaleIO Faultset Class repreentation """
     
@@ -360,7 +389,7 @@ class ScaleIO_Fault_Set(SIO_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_Fault_Set(**dict)
@@ -379,11 +408,17 @@ class SnapshotSpecification(SIO_Generic_Object):
     def __init__(self):
         self._snapshotList = []
     
-    def addVolume(self, volObj):
-        self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
-    
+    def addVolume(self, volObj, snapName=None):
+        if snapName is None:
+            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
+        else:
+            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": snapName})
+
     def removeVolume(self, volObj):
-        pass
+        for i in range(len(self._snapshotList)):
+            if self._snapshotList[i]['volumeId'] == volObj.id:
+                del self._snapshotList[i]
+                break
     
     def __to_dict__(self):
         return {"snapshotDefs" : self._snapshotList}
@@ -396,7 +431,7 @@ class IP_List(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "{} : IP: {} Role: {}".format("IP",self.ip,self.role)
@@ -411,7 +446,7 @@ class Link(object):
 
     def __str__(self):
         """
-        A convinience method to pretty print the contents of the class instance
+        A convenience method to pretty print the contents of the class instance
         """
         # to show include all variables in sorted order
         return "{} : Target: '{}' Relative: '{}'".format("Link", self.href, self.rel)
@@ -526,7 +561,7 @@ class ScaleIO(SIO_Generic_Object):
     # FIX _do_get method, easier to have one place to do error handling than in all other methods that call _do_get()
     def _do_get(self, url, **kwargs):
         """
-        Convinient method for GET requests
+        Convenient method for GET requests
         Returns http request status value from a POST request
         """
         #TODO:
@@ -548,7 +583,7 @@ class ScaleIO(SIO_Generic_Object):
 
     def _do_post(self, url, **kwargs):
         """
-        Convinient method for POST requests
+        Convenient method for POST requests
         Returns http request status value from a POST request
         """
         #TODO:
@@ -674,6 +709,22 @@ class ScaleIO(SIO_Generic_Object):
                 ScaleIO_Fault_Set.from_dict(fs)
             )
         return all_faultsets
+
+    @property
+    def vtrees(self):
+        """
+        Get list of VTrees from ScaleIO cluster
+        :return: List of VTree objects - Can be empty of no VTrees exist
+        :rtype: VTree object
+        """
+        self._check_login()
+        response = self._do_get("{}/{}".format(self._api_url, "types/VTree/instances")).json()
+        all_vtrees = []
+        for vtree in response:
+            all_vtrees.append(
+                ScaleIO_Vtree.from_dict(vtree)
+            )
+        return all_vtrees
 
     def get_system_objects(self):
         return self.system
@@ -876,6 +927,22 @@ class ScaleIO(SIO_Generic_Object):
             if vol.id == id:
                 return vol
         raise KeyError("Volume with ID " + id + " not found")
+    
+    def get_volumes_for_vtree(self, vtreeObj):
+        """
+        :param vtreeObj: VTree object
+            Protection Domain Object
+        :return: list of Volumes attached to VTree
+        :rtyoe: ScaleIO Volume object
+        """
+        self._check_login()
+        all_volumes = []
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'types/VTree::', vtreeObj.id, 'relationships/Volume')).json()
+        for vtree_volume in response:
+            all_volumes.append(
+                ScaleIO_Volume.from_dict(fs)
+            )
+        return all_volumes
 
     def get_volume_by_name(self, name):
         """
@@ -906,6 +973,18 @@ class ScaleIO(SIO_Generic_Object):
             if fs.name == name:
                 return fs
         raise KeyError("FaultSet with NAME " + name + " not found")
+
+    def get_vtree_by_id(self,id):
+        for vtree in self.vtrees:
+            if vtree.id == id:
+                return vtree
+        raise KeyError("VTree with ID " + id + " not found")
+
+    def get_vtree_by_name(self,name):
+        for vtree in self.vtrees:
+            if vtree.name == name:
+                return vtree
+        raise KeyError("VTree with NAME " + name + " not found")
     
     def get_snapshot_by_vol_name(self, volname):
         pass
