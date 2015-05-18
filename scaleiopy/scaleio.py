@@ -904,6 +904,22 @@ class ScaleIO(SIO_Generic_Object):
         # returning an empty list is
         # valid for snapshots or volumes.
         return sdcList
+    
+    def get_volumes_for_sdc(self, sdcObj):
+        """
+        :param sdcObj: SDC object
+        :return: list of Volumes attached to SDC
+        :rtyoe: ScaleIO Volume object
+        """
+        self._check_login()
+        all_volumes = []
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, 'instances/Sdc::', sdcObj.id, 'relationships/Volume')).json()
+        for sdc_volume in response:
+            all_volumes.append(
+                ScaleIO_Volume.from_dict(sdc_volume)
+            )
+        return all_volumes        
+    
 
     def get_pd_by_name(self, name):
         """
