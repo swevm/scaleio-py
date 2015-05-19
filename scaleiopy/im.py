@@ -126,7 +126,7 @@ class Im(Im_Generic_Object):
         LOGIN CAN ONLY BE DONE BY POSTING TO A HTTP FORM.
         A COOKIE IS THEN USED FOR INTERACTING WITH THE API
         """
-
+        self.logger.debug("Logging into " + "{}/{}".format(self._im_api_url, "j_spring_security_check"))
         self._im_session.headers.update({'Content-Type':'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.99 Safari/537.36'})
         #self._im_session.mount('https://', TLS1Adapter())
         #self._im_verify_ssl = False
@@ -141,10 +141,9 @@ class Im(Im_Generic_Object):
             verify=self._im_verify_ssl,
             #headers = {'Content-Type':'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.99 Safari/537.36'},
             data=payload)
-        print "Login method()"
-        #print r.text
+        self.logger.debug("Login POST response: " + "{}".format(r.text))
+
         self._im_logged_in = True
-        logging.basicConfig(level=logging.INFO)
         
         """
         ADD CODE:
@@ -167,6 +166,7 @@ class Im(Im_Generic_Object):
         #TODO:
         # Add error handling. Check for HTTP status here would be much more conveinent than in each calling method
         scaleioapi_get_headers = {'Content-type':'application/json','Version':'1.0'}
+        self.logger.debug("_do_get() " + "{}/{}".format(self._api_url,uri))
         
         if kwargs:
             for key, value in kwargs.iteritems():
@@ -202,17 +202,17 @@ class Im(Im_Generic_Object):
                 if key == 'json':
                     payload = value
         try:
+            self.logger.debug("do_put(): " + "{}".format(uri))
+
             #self._session.headers.update({'Content-Type':'application/json'})
             response = self._session.put(url, headers=scaleioapi_put_headers, verify_ssl=self._im_verify_ssl, data=json.dumps(payload))
-            print "PUT call:"
-            print response.text
+            self.logger.debug("_do_put() - Response: " + "{}".format(response.text))
             if response.status_code == requests.codes.ok:
                 return response
             else:
+                self.logger.error("_do_put() - HTTP response error: " + "{}".format(response.status_code))
                 raise RuntimeError("_do_put() - HTTP response error" + response.status_code)
         except:
-            print "PUT call response:"
-            print response.text
             raise RuntimeError("_do_put() - Communication error with ScaleIO gateway")
         return response
     
@@ -224,7 +224,8 @@ class Im(Im_Generic_Object):
         #TODO:
         # Add error handling. Check for HTTP status here would be much more conveinent than in each calling method
         scaleioapi_post_headers = {'Content-type':'application/json','Version':'1.0'}
-        print "_dopost()"
+        self.logger.debug("_do_post()")
+
         if kwargs:
             for key, value in kwargs.iteritems():
                 if key == 'headers':
@@ -235,15 +236,13 @@ class Im(Im_Generic_Object):
                     print "Adding files to upload"
         try:
             response = self._session.post(url, headers=scaleioapi_post_headers, verify_ssl=self._im_verify_ssl, files=upl_files)
-            print "POST call:"
-            print response.text
+            self.logger.debug("_do_post() - Response: " + "{}".format(response.text))
             if response.status_code == requests.codes.ok:
                 return response
             else:
+                self.logger.error("_do_post() - Response Code: " + "{}".format(response.status_code))
                 raise RuntimeError("_do_post() - HTTP response error" + response.status_code)
         except:
-            print "POST call response:"
-            print response.text
             raise RuntimeError("_do_post() - Communication error with ScaleIO gateway")
         return response
  
