@@ -60,7 +60,7 @@ class Im(Im_Generic_Object):
     """
     The IM class provides a pythonic way to interact with and manage a ScaleIO cluster using Installation Manager 'private' API/
     """
-    def __init__(self, api_url, username, password, verify_ssl=False, LiaPassword=None):
+    def __init__(self, api_url, username, password, verify_ssl=False, LiaPassword=None, debugLevel=None):
         """
         Initializes the class
 
@@ -85,8 +85,38 @@ class Im(Im_Generic_Object):
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         self._cluster_config_cached = None
         self._cache_contains_uncommitted = None
+        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
+            level=self._get_log_level(debugLevel))
+        self.logger = logging.getLogger(__name__)
+        self.logger.debug("Logger initialized!")
         
         self.SIO_Configuration_Object = None # Holds a DICT representation of the ScaleIO System Configuration
+        
+    @staticmethod
+    def _get_log_level(level):
+        """
+        small static method to get logging level
+        :param str level: string of the level e.g. "INFO"
+        :returns logging.<LEVEL>: appropriate debug level
+        """
+        # default to DEBUG
+        if level is None or level == "DEBUG":
+            return logging.DEBUG
+
+        level = level.upper()
+        # Make debugging configurable
+        if level == "INFO":
+            return logging.INFO
+        elif level == "WARNING":
+            return logging.WARNING
+        elif level == "CRITICAL":
+            return logging.CRITICAL
+        elif level == "ERROR":
+            return logging.ERROR
+        elif level == "FATAL":
+            return logging.FATAL
+        else:
+            raise Exception("UnknownLogLevelException: enter a valid log level")
 
     def _get_cached_config_json(self):
         return self._cluster_config_cached
