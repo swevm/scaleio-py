@@ -16,7 +16,7 @@ from scaleioobject import *
 from installerfsm import *
 
 
-from pprint import pprint
+#from pprint import pprint
 
 class TLS1Adapter(HTTPAdapter):
     """
@@ -248,9 +248,9 @@ class Im(Im_Generic_Object):
  
     def get_installation_instances(self):
         self.logger.debug("/types/Installation/instances")
-        print "/types/Installation/instances/"
+        #print "/types/Installation/instances/"
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/Installation/instances'))
-        print resp.text
+        #print resp.text
 
     def get_state(self, count=None):
         self.logger.debug("/types/State/instances")
@@ -367,7 +367,8 @@ class Im(Im_Generic_Object):
         #resp = self._im_session.get('https://192.168.100.52/types/InstallationPackageWithLatest/instances', params=parameter)
         jresp = json.loads(resp.text)
         #pprint(jresp.text)
-
+        return jresp
+    
     def get_command_state(self, count=None):
         self.logger.debug("get_command_state(" + "{})".format(count))
         #print "/types/Command/instances"
@@ -465,7 +466,7 @@ class Im(Im_Generic_Object):
         """
         self.logger.debug("push_cached_cluster_configuration(" + "{},{},{},{},{}".format(mdmPassword, liaPassword, noUpload, noInstall, noConfigure))
         config_params = {'noUpload': noUpload, 'noInstall': noInstall, 'noConfigure':noConfigure}
-        print "Push cached ScaleIO cluster configuration to IM"
+        #print "Push cached ScaleIO cluster configuration to IM"
         self._cluster_config_cached.setMdmPassword(mdmPassword)
         self._cluster_config_cached.setLiaPassword(liaPassword)
         self.logger.debug("Push JSON data:")
@@ -670,7 +671,7 @@ class Im(Im_Generic_Object):
         files_to_upload_dict = {}
         files_to_upload_list = [ f for f in listdir(directory) if isfile(join(directory,f)) ]
         self.logger.debug("uploadPackages(" + "{})".format(directory))
-        print "Files to upload:"
+        #print "Files to upload:"
         for index in range(len(files_to_upload_list)):
             self.logger.info(files_to_upload_list[index])
             self.uploadFileToIM (directory, files_to_upload_list[index], files_to_upload_list[index])
@@ -784,7 +785,7 @@ class Im(Im_Generic_Object):
             verify = False,
             data = parameters
             )
-        pprint (resp)
+        #pprint (resp)
      
     def getInstallerUrl(self):
         pass
