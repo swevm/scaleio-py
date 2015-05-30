@@ -13,6 +13,7 @@ Requirements:
 
 ## Module status
 Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm ScaleIO-py is in early beta stage and focus will be on getting basic features become stable (especially the to/from object mapping) before adding fancy functionality. 
+### None of this code have been tested with any v1.3w builds. It may or may not work. Open an Issue of you find a problem.
 
 
 ## Installation
