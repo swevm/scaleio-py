@@ -577,7 +577,8 @@ class ScaleIO(SIO_Generic_Object):
                 self.logger.error('_do_get() - HTTP response error: %s', response.status_code)
                 self.logger.error('_do_get() - HTTP response error, data: %s', response.text)                
                 raise RuntimeError("_do_get() - HTTP response error" + response.status_code)
-        except:
+        except Exception as e:
+            self.logger.error("_do_get() - Unhandled Error Occurred: %s" % str(e)) 
             raise RuntimeError("_do_get() - Communication error with ScaleIO gateway")
         return response
 
@@ -599,7 +600,8 @@ class ScaleIO(SIO_Generic_Object):
                 self.logger.error('_do_post() - HTTP response error: %s', response.status_code)
                 self.logger.error('_do_post() - HTTP response error, data: %s', response.text)                
                 raise RuntimeError("_do_post() - HTTP response error" + response.status_code)
-        except:
+        except Exception as e:
+            self.logger.error("_do_post() - Unhandled Error Occurred: %s" % str(e)) 
             raise RuntimeError("_do_post() - Communication error with ScaleIO gateway")
         return response
 
