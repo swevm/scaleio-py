@@ -3,6 +3,12 @@ import json
 import time
 
 
+"""
+TODO:
+* Add logging (replace all print statements) - Use self.FSM.imapi.logger.debug() to access IM objects existing logger facility
+
+"""
+
 ##======================================================
 #       ScaleIO IM Installation process State Machine
 ##======================================================
