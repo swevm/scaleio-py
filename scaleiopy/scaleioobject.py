@@ -426,5 +426,5 @@ class ScaleIO_System_Object(Im_Generic_Object):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)
+    #logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s', level=logging.WARNING)
     print "Cannot run this code by direct call to script"
