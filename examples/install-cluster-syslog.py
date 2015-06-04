@@ -147,7 +147,7 @@ imconn = im.Im("https://192.168.102.12","admin","Scaleio123",verify_ssl=False) #
 imconn._login()
 
 ### UPLOAD RPM PACKAGES TO BE DEPLOYED BY IM ###
-#imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_1277/') # Adjust to your needs. All RPMs for RHEL6 should exist in this dir except for GUI and Gateway
+imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_1277/') # Adjust to your needs. All RPMs for RHEL6 should exist in this dir except for GUI and Gateway
 
 ####################
 # INSTALLER STAGES #
@@ -158,9 +158,9 @@ im_installer = im.InstallerFSM(imconn, True)
 
 time.sleep(5) # Wait a few seconds before continuing - Not necessary
 
-print "Create cluster as Python objects"
-pprint(sioobj.to_JSON())
-#imconn.push_cluster_configuration(sioobj.to_JSON())
+#print "Create cluster as Python objects"
+#pprint(sioobj.to_JSON())
+imconn.push_cluster_configuration(sioobj.to_JSON())
 
 print "Start Install process!!!"
-#im_installer.Execute() # Start install process
+im_installer.Execute() # Start install process
