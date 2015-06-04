@@ -51,7 +51,7 @@ callhomeMdmPassword = mdmPassword # Same as MDM password defined above
 callhomeCustomerName = 'Customer' # Customer name
 callhomeHost = 'localhost' # IP or hostname to SMTP server
 callhomePort = '25' # TCP port of SMTP server
-callhomeTls = 'TLS' # Encryption method. (investigate possible values)
+callhomeTls = True # Encryption method. (True or False)
 callhomeSmtpUsername = 'root' # If a username is needed to connect to SMTP server, set it here
 callhomeSmtpPassword = 'password' 
 callhomeAlertEmailTo = 'root@localhost' # Commaseparated list of email addresses as alert recipients
@@ -64,21 +64,21 @@ callhomeSeverity = 'ERROR' # What severity level of events should trigger sendin
 primaryMdm = sioobj.Mdm_Object(json.loads(node2.to_JSON()), None, None, node2.nodeIPs)
 secondaryMdm = sioobj.Mdm_Object(json.loads(node3.to_JSON()), None, None, node3.nodeIPs)
 tb = sioobj.Tb_Object(json.loads(node1.to_JSON()), None, node1.nodeIPs)
-#callHomeConfiguration = sioobj.Call_Home_Configuration_Object(callhomeEmailFrom,
-#                                                       callhomeMdmUsername,
-#                                                       callhomeMdmPassword,
-#                                                       callhomeCustomerName,
-#                                                       callhomeHost,
-#                                                       callhomePort,
-#                                                       callhomeTls,
-#                                                       callhomeSmtpUsername,
-#                                                       callhomeAlertEmailTo,
-#                                                       callhomeSeverity
-#                                                       )
-callHomeConfiguration = None
+callHomeConfiguration = sioobj.Call_Home_Configuration_Object(callhomeEmailFrom,
+                                                       callhomeMdmUsername,
+                                                       callhomeMdmPassword,
+                                                       callhomeCustomerName,
+                                                       callhomeHost,
+                                                       callhomePort,
+                                                       callhomeTls,
+                                                       callhomeSmtpUsername,
+                                                       callhomeAlertEmailTo,
+                                                       callhomeSeverity
+                                                       )
+#callHomeConfiguration = None
 
-#remoteSyslogConfiguration = sioobj.Remote_Syslog_Configuration_Object(remoteSyslogServer,remoteSyslogTcpPort, remoteSyslogFacility)
-remoteSyslogConfiguration = None # Set to None if you dont need remote logging for SIO
+remoteSyslogConfiguration = sioobj.Remote_Syslog_Configuration_Object(remoteSyslogServer,remoteSyslogTcpPort, remoteSyslogFacility)
+#remoteSyslogConfiguration = None # Set to None if you dont need remote logging for SIO
 
 ################################################################
 #Create SDS objects - To be added to SDS list in System_Object #
