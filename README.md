@@ -14,7 +14,7 @@ Requirements:
 ## Module status
 Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm ScaleIO-py is in early beta stage and focus will be on getting basic features become stable (especially the to/from object mapping) before adding fancy functionality. 
 
-### None of this code have been tested with any v1.32 builds. It may or may not work. Open an Issue of you find a problem.
+### UPDATE 2015-06-06: Provisioning of ScaleIO cluster using IM works but there are issues with ScaleIO cluster mgmt once installed. Am workin on adopting code so it work correctly in 1.32 as well. for example create a new volume and map to host do not work. Many other may work bu I have´t tested yet.
 
 
 ## Installation
