@@ -294,20 +294,18 @@ class Call_Home_Configuration_Object(Im_Generic_Object):
         self.smtpPassword=smtpPassword
         self.alertEmailTo=alertEmailTo
         self.severity=severity
-        
+
     @staticmethod
     def from_dict(dict):
         """
         A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        if dict['callHomeConfiguration'] == 'None':
-            return None
         return Call_Home_Configuration_Object(**dict)
 
 class Remote_Syslog_Configuration_Object(Im_Generic_Object):
     """
-    Python object representation of a MDM (primary or secondary look eactly the same configuration wise).
+    Python object representation of a Remote Syslog Logging.
     """
     
     def __init__(self,
@@ -317,18 +315,16 @@ class Remote_Syslog_Configuration_Object(Im_Generic_Object):
     ):
         self.ip=ip
         self.port=port
-        self.facility=facility
-        
+        self.facility=facility #Must be a number between 1-23
+
     @staticmethod
     def from_dict(dict):
         """
         A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        if dict['remoteSysogConfiguration'] == 'None':
-            return None
         return Remote_Syslog_Configuration_Object(**dict)
-
+    
 class ScaleIO_System_Object(Im_Generic_Object):
     """
     Root configuration object
@@ -368,12 +364,12 @@ class ScaleIO_System_Object(Im_Generic_Object):
         if callHomeConfiguration is None:
             self.callHomeConfiguration = None
         else:
-            self.callHomeConfiguration=Call_Home_Configuration_Object.from_dict(callHomeConfiguration)
+            self.callHomeConfiguration = callHomeConfiguration
         if remoteSyslogConfiguration is None:
             self.remoteSyslogConfiguration = None
         else:
-            self.remoteSyslogConfiguration=Remote_Syslog_Configuration_Object.from_dict(remoteSyslogConfiguration)
-
+            # Might be a good idea to check type(remoteSyslogConfiguration) and verify class type
+            self.remoteSyslogConfiguration = remoteSyslogConfiguration
     def setLiaPassword(self, value):
         self.liaPassword = value
         
@@ -418,7 +414,7 @@ class ScaleIO_System_Object(Im_Generic_Object):
     @staticmethod
     def from_dict(dict):
         """
-        A convinience method that directly creates a new instance from a passed dictionary (that probably came from a
+        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
         return ScaleIO_System_Object(**dict)
