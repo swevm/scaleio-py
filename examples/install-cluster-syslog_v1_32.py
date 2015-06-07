@@ -88,11 +88,11 @@ remoteSyslogConfiguration = sioobj.Remote_Syslog_Configuration_Object(remoteSysl
 #sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', 'faultset1', node1.nodeIPs, None, None, None, False, '7072')
 
 sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', None, node1.nodeIPs, None, None, None, False, '7072')
-sds1.addDevice("/home/vagrant/scaleio1", None, None)
+sds1.addDevice("/dev/loop0", None, None)
 sds2 = sioobj.Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', None, node2.nodeIPs, None, None, None, False, '7072')
-sds2.addDevice("/home/vagrant/scaleio1", None, None)
+sds2.addDevice("/dev/loop0", None, None)
 sds3 = sioobj.Sds_Object(json.loads(node3.to_JSON()), None, 'SDS_' + str(node3.nodeIPs[0]), 'default', None, node3.nodeIPs, None, None, None, False, '7072')
-sds3.addDevice("/home/vagrant/scaleio1", None, None)
+sds3.addDevice("/dev/loop0", None, None)
 sdsList.append(json.loads(sds1.to_JSON()))
 sdsList.append(json.loads(sds2.to_JSON()))
 sdsList.append(json.loads(sds3.to_JSON()))
@@ -147,8 +147,8 @@ imconn = im.Im("https://192.168.102.12","admin","Scaleio123",verify_ssl=False) #
 imconn._login()
 
 ### UPLOAD RPM PACKAGES TO BE DEPLOYED BY IM ###
-imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_1277/') # Adjust to your needs. All RPMs for RHEL6 should exist in this dir except for GUI and Gateway
-#imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_132_402_1/') # ScaleIO 1.32 FnF for RHEL6 (This is 1.32 GA build)
+#imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_1277/') # Adjust to your needs. All RPMs for RHEL6 should exist in this dir except for GUI and Gateway
+imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_132_402_1/') # ScaleIO 1.32 FnF for RHEL6 (This is 1.32 GA build)
 
 ####################
 # INSTALLER STAGES #
