@@ -85,7 +85,7 @@ class ScaleIO_System(SIO_Generic_Object):
         self.install_id = installId
         self.swid = swid 
         self.days_installed = daysInstalled 
-        self.max_caapcity_in_gb = maxCapacityInGb
+        self.max_capacity_in_gb = maxCapacityInGb
         self.capacity_time_left_in_days = capacityTimeLeftInDays 
         self.enterprise_features_enabled = enterpriseFeaturesEnabled
         self.default_is_volume_obfuscated = defaultIsVolumeObfuscated
