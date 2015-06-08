@@ -9,9 +9,5 @@ import sys
 # Deletes specified volume and unmap from all mapped SDCs
 
 sio = scaleio.ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2],sys.argv[3],False,"ERROR") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
-    
-#pprint(sio.sdc)
-#pprint(sio.volumes)
 
-#sio.delete_volume(sio.get_volume_by_name(sys.argv[4]), 'ONLY_ME')
 sio.delete_volume(sio.get_volume_by_name(sys.argv[4]), 'ONLY_ME', autoUnmap=True)

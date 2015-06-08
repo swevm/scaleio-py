@@ -131,7 +131,10 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
         protectionDomainId=None, 
         zeroPaddingEnabled=None,
         useRmcache=None, 
-        rmcacheWriteHandlingMode=None #Passthrough or Cached
+        rmcacheWriteHandlingMode=None, #Passthrough or Cached
+        # v1.32 specific
+        backgroundScannerMode = None, 
+        backgroundScannerBWLimitKBps = None
     ):
         self.id=id
         self.name=name
@@ -157,8 +160,10 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
         self.protection_domain_id=protectionDomainId 
         self.zero_padding_enabled=zeroPaddingEnabled
         self.use_rm_cache=useRmcache 
-        self.rmcache_write_handling_mode=rmcacheWriteHandlingMode       
-    
+        self.rmcache_write_handling_mode=rmcacheWriteHandlingMode
+        # v1.32 specific
+        self.backgroundScanneMode = backgroundScannerMode
+        self.backgroundScannerBWLimitKBps = backgroundScannerBWLimitKBps
     @staticmethod
     def from_dict(dict):
         """
@@ -499,11 +504,13 @@ class ScaleIO(SIO_Generic_Object):
         self._session.mount('https://', TLS1Adapter())
         self._verify_ssl = verify_ssl
         self._logged_in = False
+        self._api_version = None
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
             level=self._get_log_level(debugLevel))
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
+        self._check_login() # Login. Otherwise login is called upon first API operation
 
     @staticmethod
     def _get_log_level(level):
@@ -550,6 +557,12 @@ class ScaleIO(SIO_Generic_Object):
             self.logger.debug('Authentication token recieved: %s', self._auth_token)
             self._session.auth = HTTPBasicAuth('',self._auth_token)
             self._logged_in = True
+            # Set _api_version_ to current version of connected API
+            self._api_version = login_response = self._session.get(
+                "{}/{}".format(self._api_url,"version"),
+                verify=self._verify_ssl,
+                auth=HTTPBasicAuth(self._username, self._password)
+                ).json()
 
     def _check_login(self):
         if not self._logged_in:
@@ -749,7 +762,16 @@ class ScaleIO(SIO_Generic_Object):
     
     def get_system_id(self):
         return self.system[0].id
-           
+
+    def get_api_version(self):
+        """
+        Get version number of SIO API for current installed ScaleIO product
+        rtype: string
+        """
+        # API version scheme:
+        # 1.0 = 
+        # 1.1 = 
+        return self._api_version 
     def get_sds_in_faultset(self, faultSetObj):
         """
         Get list of SDS objects attached to a specific ScaleIO Faultset
@@ -1120,15 +1142,16 @@ class ScaleIO(SIO_Generic_Object):
     """
     Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
     """
-    def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO: CHANGE NAME TO create_volume()
+    #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
+    def create_volume(self, volName, volSizeInMb, pdObj, spObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
         if thinProvision:
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        # ScaleIO v1.31 demand protectionDomainId in JSON but not storgePoolId. v1.32 is fine with storeagePoolId only
+        volumeDict = {'protectionDomainId': pdObj.id, 'storagePoolId': spObj.id, 'volumeSizeInKb': str(int(volSizeInMb) * 1024),  'name': volName, 'volumeType': volType}
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
