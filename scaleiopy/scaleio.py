@@ -504,11 +504,13 @@ class ScaleIO(SIO_Generic_Object):
         self._session.mount('https://', TLS1Adapter())
         self._verify_ssl = verify_ssl
         self._logged_in = False
+        self._api_version = None
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
             level=self._get_log_level(debugLevel))
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
+        self._check_login() # Login. Otherwise login is called upon first API operation
 
     @staticmethod
     def _get_log_level(level):
@@ -555,6 +557,12 @@ class ScaleIO(SIO_Generic_Object):
             self.logger.debug('Authentication token recieved: %s', self._auth_token)
             self._session.auth = HTTPBasicAuth('',self._auth_token)
             self._logged_in = True
+            # Set _api_version_ to current version of connected API
+            self._api_version = login_response = self._session.get(
+                "{}/{}".format(self._api_url,"version"),
+                verify=self._verify_ssl,
+                auth=HTTPBasicAuth(self._username, self._password)
+                ).json()
 
     def _check_login(self):
         if not self._logged_in:
@@ -754,7 +762,16 @@ class ScaleIO(SIO_Generic_Object):
     
     def get_system_id(self):
         return self.system[0].id
-           
+
+    def get_api_version(self):
+        """
+        Get version number of SIO API for current installed ScaleIO product
+        rtype: integer
+        """
+        #self._check_login()
+        #response = self._do_get("{}/{}".format(self._api_url, 'version')).json()
+        return self._api_version #response
+    
     def get_sds_in_faultset(self, faultSetObj):
         """
         Get list of SDS objects attached to a specific ScaleIO Faultset
