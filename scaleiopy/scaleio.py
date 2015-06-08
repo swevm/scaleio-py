@@ -131,7 +131,10 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
         protectionDomainId=None, 
         zeroPaddingEnabled=None,
         useRmcache=None, 
-        rmcacheWriteHandlingMode=None #Passthrough or Cached
+        rmcacheWriteHandlingMode=None, #Passthrough or Cached
+        # v1.32 specific
+        backgroundScannerMode = None, 
+        backgroundScannerBWLimitKBps = None
     ):
         self.id=id
         self.name=name
@@ -157,8 +160,10 @@ class ScaleIO_Storage_Pool(SIO_Generic_Object):
         self.protection_domain_id=protectionDomainId 
         self.zero_padding_enabled=zeroPaddingEnabled
         self.use_rm_cache=useRmcache 
-        self.rmcache_write_handling_mode=rmcacheWriteHandlingMode       
-    
+        self.rmcache_write_handling_mode=rmcacheWriteHandlingMode
+        # v1.32 specific
+        self.backgroundScanneMode = backgroundScannerMode
+        self.backgroundScannerBWLimitKBps = backgroundScannerBWLimitKBps
     @staticmethod
     def from_dict(dict):
         """
@@ -1120,15 +1125,15 @@ class ScaleIO(SIO_Generic_Object):
     """
     Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
     """
-    def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO: CHANGE NAME TO create_volume()
+    #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
+    def create_volume(self, volName, volSizeInMb, storagePoolObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
         if thinProvision:
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        volumeDict = {'storagePoolId': storagePoolObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
