@@ -766,12 +766,12 @@ class ScaleIO(SIO_Generic_Object):
     def get_api_version(self):
         """
         Get version number of SIO API for current installed ScaleIO product
-        rtype: integer
+        rtype: string
         """
-        #self._check_login()
-        #response = self._do_get("{}/{}".format(self._api_url, 'version')).json()
-        return self._api_version #response
-    
+        # API version scheme:
+        # 1.0 = 
+        # 1.1 = 
+        return self._api_version 
     def get_sds_in_faultset(self, faultSetObj):
         """
         Get list of SDS objects attached to a specific ScaleIO Faultset
@@ -1151,7 +1151,7 @@ class ScaleIO(SIO_Generic_Object):
         else:
             volType = 'ThickProvisioned'
         # ScaleIO v1.31 demand protectionDomainId in JSON but not storgePoolId. v1.32 is fine with storeagePoolId only
-        volumeDict = {'protectionDomainId': pdObj.id, 'storagePoolId': spObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        volumeDict = {'protectionDomainId': pdObj.id, 'storagePoolId': spObj.id, 'volumeSizeInKb': str(int(volSizeInMb) * 1024),  'name': volName, 'volumeType': volType}
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
