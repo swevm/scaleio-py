@@ -1126,14 +1126,15 @@ class ScaleIO(SIO_Generic_Object):
     Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
     """
     #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
-    def create_volume(self, volName, volSizeInMb, storagePoolObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
+    def create_volume(self, volName, volSizeInMb, pdObj, spObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
         if thinProvision:
             volType = 'ThinProvisioned'
         else:
             volType = 'ThickProvisioned'
-        volumeDict = {'storagePoolId': storagePoolObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
+        # ScaleIO v1.31 demand protectionDomainId in JSON but not storgePoolId. v1.32 is fine with storeagePoolId only
+        volumeDict = {'protectionDomainId': pdObj.id, 'storagePoolId': spObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
         response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
         if kwargs:
