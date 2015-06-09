@@ -4,16 +4,16 @@ from setuptools import find_packages
 from distutils.core import setup
 
 setup(
-    author='Matt Cowger & Magnus Nilson',
-    author_email='magnus@karabas.nu,matt@cowger.us',
+    author='Magnus Nilsson',
+    author_email='magnus@karabas.nu',
     name='ScaleIO-py',
-    description='Python interface to ScaleIO 1.3 REST API',
-    version="0.31",
+    description='Python interface to ScaleIO 1.31+ REST API',
+    version="0.3.3",
     url='https://github.com/swevm/scaleio-py/',
     license='Apache License',
     packages=find_packages(),
     classifiers=[
-        'Development Status :: 4 - Alpha',
+        'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
@@ -21,6 +21,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
     install_requires=[
-        open("requirements.txt").readlines(),
+        open("requires.txt").readlines()
     ],
 )
