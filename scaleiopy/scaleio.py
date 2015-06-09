@@ -1112,36 +1112,7 @@ class ScaleIO(SIO_Generic_Object):
         #except:
         #    raise RuntimeError("delete_snapshot() - Error communicating wit ScaleIO gateway")
         return response
-    
-    def create_volume_by_pd_name(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO: REMOVE - Replace byt create_volume()
-        # Check if object parameters are the correct ones, otherwise throw error
-        self._check_login()    
-        if thinProvision:
-            volType = 'ThinProvisioned'
-        else:
-            volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
-        response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
-        if kwargs:
-            for key, value in kwargs.iteritems():
-                if key == 'mapAll':
-                    if value == True:
-                        self.map_volume_to_sdc(self.get_volume_by_name(volName), mapAll=True)
-                if key == 'mapToSdc':
-                    if value:
-                        for innerKey, innerValue in kwargs.iteritems():
-                            if innerKey == 'mapAll':
-                                    if innerValue == True:
-                                        self.map_volume_to_sdc(self.get_volume_y_name(volName), mapAll=True)
-                                    else:
-                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
-        return response
-
-    """
-    Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
-    """
     #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
     def create_volume(self, volName, volSizeInMb, pdObj, spObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
