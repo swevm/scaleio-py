@@ -989,7 +989,7 @@ class ScaleIO(SIO_Generic_Object):
         :param vtreeObj: VTree object
             Protection Domain Object
         :return: list of Volumes attached to VTree
-        :rtyoe: ScaleIO Volume object
+        :rtype: ScaleIO Volume object
         """
         self._check_login()
         all_volumes = []
