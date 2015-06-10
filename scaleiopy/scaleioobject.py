@@ -342,7 +342,9 @@ class ScaleIO_System_Object(Im_Generic_Object):
         sdsList=None,
         sdcList=None,
         callHomeConfiguration=None,
-        remoteSyslogConfiguration=None
+        remoteSyslogConfiguration=None,
+        # v1.32 specific
+        licenseType=None
         
     ):
         self.installationId=installationId
@@ -370,6 +372,8 @@ class ScaleIO_System_Object(Im_Generic_Object):
         else:
             # Might be a good idea to check type(remoteSyslogConfiguration) and verify class type
             self.remoteSyslogConfiguration = remoteSyslogConfiguration
+        self.licenseType=licenseType    
+        
     def setLiaPassword(self, value):
         self.liaPassword = value
         
