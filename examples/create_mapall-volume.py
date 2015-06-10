@@ -10,6 +10,6 @@ import sys
 
 sio = scaleio.ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2],sys.argv[3],False,"ERROR") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
     
-sio.create_volume(sys.argv[4], sys.argv[5], sio.get_pd_by_name(sys.argv[6]), sio.get_storage_pool_by_name(sys.argv[7]), mapAll=True)
+sio.create_volume(sys.argv[4], sys.argv[5], sio.get_pd_by_name(sys.argv[6]), sio.get_storage_pool_by_name(sys.argv[7]), enableMapAllSdcs=True)
 
 pprint(sio.volumes)
