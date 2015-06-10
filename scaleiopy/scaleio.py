@@ -923,8 +923,8 @@ class ScaleIO(SIO_Generic_Object):
             for sdc in volObj.mapped_sdcs:
                 sdcList.append(sdc)
         if len(sdcList) == 0:
-            self.logger.debug("No SDCs mapped to volume: %s-(%s)" %
-                                (volObj.name, volObj.id))
+            self.logger.debug("No SDCs mapped to volume: %s-(%s)" % (volObj.name, volObj.id))
+            return []
         # returning an empty list is
         # valid for snapshots or volumes.
         return sdcList
@@ -989,7 +989,7 @@ class ScaleIO(SIO_Generic_Object):
         :param vtreeObj: VTree object
             Protection Domain Object
         :return: list of Volumes attached to VTree
-        :rtyoe: ScaleIO Volume object
+        :rtype: ScaleIO Volume object
         """
         self._check_login()
         all_volumes = []
@@ -1112,36 +1112,7 @@ class ScaleIO(SIO_Generic_Object):
         #except:
         #    raise RuntimeError("delete_snapshot() - Error communicating wit ScaleIO gateway")
         return response
-    
-    def create_volume_by_pd_name(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs):
-        # TODO: REMOVE - Replace byt create_volume()
-        # Check if object parameters are the correct ones, otherwise throw error
-        self._check_login()    
-        if thinProvision:
-            volType = 'ThinProvisioned'
-        else:
-            volType = 'ThickProvisioned'
-        volumeDict = {'protectionDomainId': pdObj.id, 'volumeSizeInKb': str(volSizeInMb * 1024),  'name': volName, 'volumeType': volType}
-        response = self._do_post("{}/{}".format(self._api_url, "types/Volume/instances"), json=volumeDict)
 
-        if kwargs:
-            for key, value in kwargs.iteritems():
-                if key == 'mapAll':
-                    if value == True:
-                        self.map_volume_to_sdc(self.get_volume_by_name(volName), mapAll=True)
-                if key == 'mapToSdc':
-                    if value:
-                        for innerKey, innerValue in kwargs.iteritems():
-                            if innerKey == 'mapAll':
-                                    if innerValue == True:
-                                        self.map_volume_to_sdc(self.get_volume_y_name(volName), mapAll=True)
-                                    else:
-                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
-        return response
-
-    """
-    Use create_volume() instead of create_volume_by_pd_name() which doesnt make sense name wise since it take a PD object and not a name
-    """
     #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
     def create_volume(self, volName, volSizeInMb, pdObj, spObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
@@ -1156,17 +1127,16 @@ class ScaleIO(SIO_Generic_Object):
 
         if kwargs:
             for key, value in kwargs.iteritems():
-                if key == 'mapAll':
-                    if value == True:
-                        self.map_volume_to_sdc(self.get_volume_by_name(volName), mapAll=True)
+                if key == 'enableMapAllSdcs' and value == True:
+                    self.map_volume_to_sdc(self.get_volume_by_name(volName), enableMapAllSdcs=True)
                 if key == 'mapToSdc':
                     if value:
                         for innerKey, innerValue in kwargs.iteritems():
-                            if innerKey == 'mapAll':
+                            if innerKey == 'enableMapAllSdcs':
                                     if innerValue == True:
-                                        self.map_volume_to_sdc(self.get_volume_y_name(volName), mapAll=True)
+                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), enableMapAllSdcs=True)
                                     else:
-                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), value)
+                                        self.map_volume_to_sdc(self.get_volume_by_name(volName), self.get_sdc_by_name(value))
         return response
 
     def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
@@ -1200,7 +1170,7 @@ class ScaleIO(SIO_Generic_Object):
         self._check_login()
         if kwargs:
             for key, value in kwargs.iteritems():
-                if key == 'mapAll':
+                if key == 'enableMapAllSdcs':
                     if value == True:
                         mapVolumeToSdcDict = {'allSdcs': 'True'}
         else:
@@ -1227,16 +1197,15 @@ class ScaleIO(SIO_Generic_Object):
         self._check_login()
         if kwargs:
             for key, value in kwargs.iteritems():
-                if key == 'disableMapAllSdcs':
-                    if value == True:
-                        if self.get_volume_all_sdcs_mapped:
-                            unmapVolumeFromSdcDict = {'allSdcs': 'False'}
+                if key == 'enableMapAllSdcs' and value == False:
+                    if self.get_volume_all_sdcs_mapped(volObj): # Check if allSdc?s is True before continuing
+                        unmapVolumeFromSdcDict = {'allSdcs': 'False'}
         else:
                 unmapVolumeFromSdcDict = {'sdcId': sdcObj.id}
         try:
             response = self._do_post("{}/{}{}/{}".format(self._api_url, "instances/Volume::", volObj.id, 'action/removeMappedSdc'), json=unmapVolumeFromSdcDict)
         except:
-            raise RuntimeError("unmap_volume_from_sdc() - Communication error with ScaleIO gateway")
+            raise RuntimeError("unmap_volume_from_sdc() - Cannot unmap volume")
         return response
 
     def delete_volume(self, volObj, removeMode='ONLY_ME', **kwargs):
@@ -1246,20 +1215,20 @@ class ScaleIO(SIO_Generic_Object):
         """
         if kwargs:
             for key, value in kwargs.iteritems():
-                if key =='autoUnmap':
+                if key =='autoUnmap' and value ==True:
                     # Find all mapped SDS to this volObj
                     # Call unmap for all of them
-                    if self.get_volume_all_sdcs_mapped:
+                    if self.get_volume_all_sdcs_mapped(volObj):
                         try:
-                            self.unmap_volume_from_sdc(volObj, disableMapAllSdcs=True)
+                            self.unmap_volume_from_sdc(volObj, enableMapAllSdcs=False)
                         except:
-                            raise RuntimeError("delete_volume() - Communication error with ScaleIO gateway")
-        else:
-            for sdcIdentDict in self.get_sdc_for_volume(volObj):
-                try:
-                    self.unmap_volume_from_sdc(volObj, sio.get_sdc_by_id(sdcIdentDict.sdcId))
-                except:
-                    raise RuntimeError("delete_volume() - Communication error with ScaleIO gateway")
+                            raise RuntimeError("delete_volume() - enableMapAllSdcs error")
+                    else: # All SDS not enabled so loop through all mapped SDCs of volume and remove one by one                        
+                        for sdc in self.get_sdc_for_volume(volObj):
+                            try:
+                                self.unmap_volume_from_sdc(volObj, self.get_sdc_by_id(sdc['sdcId']))
+                            except:
+                                raise RuntimeError("delete_volume() - unmap_volume_from_sdc() error")
         # TODO:
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()

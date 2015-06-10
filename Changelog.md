@@ -33,7 +33,7 @@ Initial code to test integration against ScaleIO API
 * IM integration to install new cluster
 * Add examples
 
-## v0.31 (WIP)
+## v0.31 (beta1)
 * Create Snapshot by Volume Name
 * Create Snapshot by Volume Id
 * Delete Snapshot
@@ -45,9 +45,24 @@ Initial code to test integration against ScaleIO API
 * Delete ProtectionDomain (WIP)
 * Create FaultSet (WIP)
 * Delete FaultSet (WIP)
-* set name functionality for FS, PD, SDC and SDS
-* 
+* set name functionality for FS, PD, SDC and SDS 
 
+## v0.32 (beta2)
+* Faultset folded into IM integration as it depend on removing SDS to change - Create Faultset can be done at install time
+* Protection Domain Mgmt removed - Pushed to v0.4
+* Remove and Manage Faultsets removed - Pushed to v0.4
+* Better logging - Configurable at __init__
+
+## v0.33 (beta3)
+* Support for 1.32 - Create Volume
+* PIP package - Install with: pip install ScaleIO-py
+* Store API version to optimize code path for different versions - Not needed to be compatible with basic Mgmt for both 1.31 and 1.32 (need to be used for Metric collection)
+* delete_volume() - Obey kwargs 'autoUnmap'
+* map_volume_to_sdc() and unmap_volume_from_sdc() - Changed kwargs to 'enableMapAllSdcs'
+
+## v0.34 (beta4) WIP
+* Make logging consisent
+* Error handling - Find a consistent way to return errors to caller (caller have to use try/catch???)
 
 ## v0.3+
 * Unit Testing
