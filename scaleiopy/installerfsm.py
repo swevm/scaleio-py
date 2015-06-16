@@ -1,11 +1,11 @@
-from pprint import pprint
 import json
 import time
+
+from scaleioutil import ScaleIOLogger
 
 
 """
 TODO:
-* Add logging (replace all print statements) - Use self.FSM.imapi.logger.debug() to access IM objects existing logger facility
 
 """
 
@@ -23,8 +23,7 @@ class Transition(object):
 		self.toState = toState
 		
 	def Execute(self):
-		print ("Transitioning...")
-		print ""
+		self.logger.debug("Transitioning")
 
 
 ##===============================================
@@ -38,7 +37,6 @@ class State(object):
 		self.startTime = 0
 		im_instance = im_inst
 		# Possible states: IDLE, PENDING, FAILED, COMPLETED
-		#print self.FSM.getCurrentStateStatus()
 		
 	def Enter(self):
 		self.FSM.setCurrentStateStatus('PENDING')
@@ -63,68 +61,68 @@ class Query(State):
 		self.calling_object = im_inst
 		
 	def Enter(self):
-		print ("Entering QUERY phase")
+		self.logger.debug("Enter Query State")
 		super(Query, self).Enter()
 
 	def Execute (self):
-		print ("Start ScaleIO IM Query phase")
+		self.logger.debug("Start ScaleIO IM Query phase")
 		self.FSM.imapi.set_state('query')
-		print self.FSM.imapi.get_state()
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
+
 		self.pendingItemCount = self.FSM.install_process_status("query")
 		while self.pendingItemCount > 0:
 			self.pendingItemCount = self.FSM.install_process_status("query")
 			time.sleep(0.5)
 		if self.pendingItemCount < 0:
-			print "*** FAILED ***"
+			self.logger.error("Query State Failed!")
 		else:
-			print "*** COMPLETED ***"
+			self.logger.debug("COMPLETED")
 			self.Next()
 
 		if self.FSM.autoTransition:
 			self.FSM.Execute()
 
 	def Next(self):
-		#print ("Advance to next step")
+		self.logger.debug("Advance to UPLOAD phase")
 		self.FSM.ToTransition("toUPLOAD") # Move to next step
 		
 	def Exit(self):
 		pass
-		#print ("Exiting QUERY phase.")
 
 class Upload(State):
-	# Worker class - Takes care of managing IM QUERY phase and do status control of each phase
+	# Worker class - Takes care of managing IM UPLOAD phase and do status control of each phase
 	def __init__(self, FSM, im_inst):
 		super(Upload, self).__init__(FSM, im_inst)
 		
 	def Enter(self):
-		print ("Entering UPLOAD phase")
+		self.logger.debug("Enter Upload State")
+
 		super(Upload, self).Enter()
 
 	def Execute (self):
-		print ("Upload of binaries to nodes")
+		self.logger.debug("Upload of binaries to nodes")
 		# Call set_state
 		self.FSM.imapi.set_state('upload') # Set IM to UPLOAD state
-		print self.FSM.imapi.get_state()
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
 		self.pendingItemCount = self.FSM.install_process_status("upload")
 		while self.pendingItemCount > 0:
 			self.pendingItemCount = self.FSM.install_process_status("upload")
 			time.sleep(2)
 		if self.pendingItemCount < 0:
-			print "*** FAILED ***"
+			self.logger.error("Upload State Failed!")
 		else:
-			print "*** COMPLETED ***"
+			self.logger.debug("COMPLETED")
 			self.Next()
 		
 		if self.FSM.autoTransition:
 			self.FSM.Execute()
 	
 	def Next(self):
-		#print ("Advance to next step")
+		self.logger.debug("Advance to INSTALL phase")
 		self.FSM.ToTransition("toINSTALL") # Move to next step
 		
 	def Exit(self):
 		pass
-		#print ("Exiting UPLOAD phase.")
 
 
 class Install(State):
@@ -133,21 +131,21 @@ class Install(State):
 		super(Install, self).__init__(FSM, im_inst)
 		
 	def Enter(self):
-		print ("Entering install phase")
+		self.logger.debug("Enter Install State")
 		super(Install, self).Enter()
 
 	def Execute (self):
-		print ("Installing ScaleIO binaries")
-		self.FSM.imapi.set_state('install') # Set IM to QUERY state
-		print self.FSM.imapi.get_state()
+		self.logger.debug("Installing ScaleIO binaries on nodes")
+		self.FSM.imapi.set_state('install') # Set IM to INSTALL state
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
 		self.pendingItemCount = self.FSM.install_process_status("install")
 		while self.pendingItemCount > 0:
 			self.pendingItemCount = self.FSM.install_process_status("install")
 			time.sleep(2)
 		if self.pendingItemCount < 0:
-			print "*** FAILED ***"
+			self.logger.error("FAILED")
 		else:
-			print "*** COMPLETED ***"
+			self.logger.debug("COMPLETED")
 			time.sleep(6)
 			self.Next()
 		
@@ -155,11 +153,11 @@ class Install(State):
 			self.FSM.Execute()
 			
 	def Next(self):
-		print ("Advance to next step")
+		self.logger.debug("Advance to Configure Phase")
 		self.FSM.ToTransition("toCONFIGURE") # Move to next step
 		
 	def Exit(self):
-		print ("Exiting INSTALL phase.")
+		self.logger.debug("Exit INSTALL phase")
 
 
 class Configure(State):
@@ -168,34 +166,33 @@ class Configure(State):
 		super(Configure, self).__init__(FSM, im_inst)
 		
 	def Enter(self):
-		print ("Entering configure phase")
+		self.logger.debug("Entering Configure Phase")
 		super(Configure, self).Enter()
 
 	def Execute (self):
-		print ("Configure ScaleIO cluster")
+		self.logger.debug("Configure ScaleIO Cluster")
 		# Call set_state
 		self.FSM.imapi.set_state('configure') # Set IM to QUERY state
-		print self.FSM.imapi.get_state()
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
 		self.pendingItemCount = self.FSM.install_process_status("configure")
 		while self.pendingItemCount > 0:
 			self.pendingItemCount = self.FSM.install_process_status("configure")
 			time.sleep(2)
 		if self.pendingItemCount < 0:
-			print "*** FAILED ***"
+			self.logger.error("FAILED")
 		else:
-			print "*** COMPLETED ***"
+			self.logger.debug("COMPLETED")
 			self.Next()
 
 		if self.FSM.autoTransition:
 			self.FSM.Execute()
 		
 	def Next(self):
-		#print ("Advance to next step")
+		self.logger.debug("Advance to ARCHIVE State")
 		self.FSM.ToTransition("toARCHIVE") # Move to next step
 		
 	def Exit(self):
 		pass
-		#print ("Exiting CONFIGURE phase.")
 
 class Archive(State):
 	# Worker class - Takes care of managing IM Archive phase and do status control of each phase
@@ -203,14 +200,13 @@ class Archive(State):
 		super(Archive, self).__init__(FSM, im_inst)
 		
 	def Enter(self):
-		print ("Entering archive phase")
+		self.logger.debug("Entering Archive phase")
 		super(Archive, self).Enter()
 
 	def Execute (self):
-		print ("Completing ScaleIO cluster install")
-		#print ("Execute self.set_archive_all()")
+		self.logger.debug("Completing ScaleIO cluster installation")
 		self.FSM.imapi.set_archive_all()
-		print self.FSM.imapi.get_state()
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
 		time.sleep(3)
 		
 		self.Next()
@@ -218,11 +214,11 @@ class Archive(State):
 			self.FSM.Execute()
 		
 	def Next(self):
-		print ("Advance to next step")
+		self.logger.debug("Advance to COMPLETE step")
 		self.FSM.ToTransition("toCOMPLETE") # Move to next step
 		
 	def Exit(self):
-		print ("Exiting ARCHIVE phase.")
+		self.logger.debug("Exiting ARCHIVE phase")
 
 class Complete(State):
 	# Worker class - Takes care of managing IM "Completing" phase and do status control of each phase
@@ -230,20 +226,21 @@ class Complete(State):
 		super(Complete, self).__init__(FSM, im_inst)
 		
 	def Enter(self):
-		print ("Entering COMPLETE phase")
+		self.logger.debug("Entering COMPLETE phase")
 		super(Complete, self).Enter()
 
 	def Execute (self):
-		print ("Installation complete!")
+		self.logger.debug("Installation complete!")
 		self.FSM.setCurrentStateStatus('COMPLETED')
-		print self.FSM.getCurrentStateStatus()
-		print self.FSM.imapi.get_state()
-		
+		self.logger.debug("Current State Status: {}".format(self.FSM.getCurrentStateStatus()))
+		self.logger.debug("State: {}".format(self.FSM.imapi.get_state()))
+
+
 	def Next(self):
 		self.FSM.setCurrentStateStatus('COMPLETED')
 
 	def Exit(self):
-		print ("Exiting COMPLETE phase.")
+		self.logger.debug("Exiting COMPLETE phase")
 
 ##===============================================
 ## FINITE STATE MACHINE
@@ -282,12 +279,11 @@ class FSM(object):
 		return curState
 	
 	def setCurrentStateStatus(self, status):
-		print "*** Setting currentStateStatus to " + status + " ***" 
+		self.logger.debug("*** Setting currentStateStatus to {} ***".format(status))
 		self.curStateStatus = status
 		if status == 'COMPLETED':
 			self.trans = None
 		#	self.curState = None
-		#print "setCurrentStateStatus() = " + self.curStateStatus
 	
 	def getCurrentStateStatus(self):
 		return self.curStateStatus
@@ -303,10 +299,10 @@ class FSM(object):
 				self.Execute()
 		else:
 			self.trans = None
-			print " Status is COMPLETE - Next() will not do anything"
+			self.logger.debug("Status is COMPLETE - Next() wont do anything")
 			
 	def Execute(self):
-		print "FSM Execute() - curStateStatus = " + self.curStateStatus
+		self.logger.debug("FSM Execute() - curStateStatus = ".format(self.curStateStatus))
 		if self.curStateStatus == 'IDLE' or self.curStateStatus == 'PENDING':
 			self.setCurrentStateStatus('PENDING')
 			if (self.trans):
@@ -317,7 +313,7 @@ class FSM(object):
 				self.trans = None
 			self.curState.Execute()
 		else:
-			print "Statemachine COMPLETE"
+			self.logger.debug("Statemachine COMPLETE")
 			self.trans = None
 
 	
@@ -333,7 +329,7 @@ class FSM(object):
 						return -1
 					if innerArray['commandState'] == 'pending':
 						self.pendingItemCount += 1
-		print "Pending Items = " + str(self.pendingItemCount)
+		self.logger.debug("Pending Items: ".format(str(self.pendingItemCount)))
 		if self.pendingItemCount == 0:
 			return 0
 		else:
@@ -353,10 +349,12 @@ class InstallerFSM:
 	# Base character which will be holding the Finite State Machine,
 	# which in turn will hold the states and transitions.
 	def __init__(self, imapi, automatic=False):
+		self.loggerInstance = ScaleIOLogger.get() # Create logger Singleton
+		self.logger = self.loggerInstance.getLoglevel(debugLevel) # Get logger instance with defined logging level
 		self.FSM = FSM(imapi)
 		if automatic:
 			self.FSM.enableAutoTransition()
-			
+
 		## STATES
 		self.FSM.AddState("QUERY", Query(self.FSM, imapi))
 		self.FSM.AddState("UPLOAD", Upload(self.FSM, imapi))
