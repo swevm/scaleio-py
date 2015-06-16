@@ -10,7 +10,9 @@ import time
 import sys
 import logging
 
-from pprint import pprint
+from scaleioutil import ScaleIOLogger
+
+#from pprint import pprint
 
 class SIO_Generic_Object(object):
     @classmethod
@@ -505,38 +507,11 @@ class ScaleIO(SIO_Generic_Object):
         self._verify_ssl = verify_ssl
         self._logged_in = False
         self._api_version = None
-        requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
-        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
-            level=self._get_log_level(debugLevel))
-        self.logger = logging.getLogger(__name__)
+        requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.  
+        self.loggerInstance = ScaleIOLogger.get() # Create logger Singleton
+        self.logger = self.loggerInstance.getLoglevel(debugLevel) # Get logger instance with defined logging level
         self.logger.debug("Logger initialized!")
         self._check_login() # Login. Otherwise login is called upon first API operation
-
-    @staticmethod
-    def _get_log_level(level):
-        """
-        small static method to get logging level
-        :param str level: string of the level e.g. "INFO"
-        :returns logging.<LEVEL>: appropriate debug level
-        """
-        # default to DEBUG
-        if level is None or level == "DEBUG":
-            return logging.DEBUG
-
-        level = level.upper()
-        # Make debugging configurable
-        if level == "INFO":
-            return logging.INFO
-        elif level == "WARNING":
-            return logging.WARNING
-        elif level == "CRITICAL":
-            return logging.CRITICAL
-        elif level == "ERROR":
-            return logging.ERROR
-        elif level == "FATAL":
-            return logging.FATAL
-        else:
-            raise Exception("UnknownLogLevelException: enter a valid log level")
 
     def _login(self):
         self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
