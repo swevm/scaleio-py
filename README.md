@@ -39,6 +39,7 @@ Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm Scale
 * Get Protection Domain by id or name
 * Get Volume by id or name
 * Get list of SDC(s) mapped to Volume by volumeObject
+* Get statistics (Thanks Kevin)
 
 ### Create
 * Create Volume by Protection Domain name [rename??] (Take PD object not PD name as argument)
@@ -59,15 +60,14 @@ Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm Scale
 * Set SDC name
 * Upload binaries to be installed by IM
 
-
 ## Code examples
 Have a look in examples directory for complete code examples.
 
 ### Connect to ScaleIO API
 ```
-from scaleiopy import scaleio
+from scaleiopy.scaleio import ScaleIO
 # Logging level can be change by adjusting last parameter [DEBUG, FATAL, ERROR, CRITICAL, WARNING, INFO]. If left out of class init DEBUG is assumed
-sio = scaleio.ScaleIO("https://192.168.50.12/api","admin","Scaleio123",False, "ERROR)
+sio = ScaleIO("https://192.168.50.12/api","admin","Scaleio123",False, "ERROR)
 ```
 
 #### Get a list of all attributes related to each SDC known by your ScaleIO cluster
@@ -145,4 +145,10 @@ sio.delete_snapshot(sio.get_system_id(), 'consistency_group_id')
 ```
 #Install cluster using 'private' IM API
 #Look in examples/install-cluster-mac.py for a complete example
+```
+
+#### Get statistics data from ScaleIO
+```
+#print all statistics data:
+pprint(sio.statistics)
 ```
