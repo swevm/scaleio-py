@@ -1,9 +1,22 @@
-from scaleiopy import im
-from scaleiopy import scaleioobject as sioobj
-#from scaleio import installerfsm as instfsm
 import time
 import json
 from pprint import pprint
+
+# Project imports
+from scaleiopy import im as sioobj
+from scaleiopy.util.installerfsm import * #installerfsm as instfsm
+from scaleiopy.im import Im
+
+
+from scaleiopy.api.im.mapping.node import Node_Object
+from scaleiopy.api.im.mapping.mdm import Mdm_Object
+from scaleiopy.api.im.mapping.callhome_configuration import Call_Home_Configuration_Object
+from scaleiopy.api.im.mapping.tb import Tb_Object
+from scaleiopy.api.im.mapping.syslog_configuration import Remote_Syslog_Configuration_Object
+from scaleiopy.api.im.mapping.sdc import Sdc_Object
+from scaleiopy.api.im.mapping.sds import Sds_Object
+from scaleiopy.api.im.mapping.sds_device import Sds_Device_Object
+from scaleiopy.api.im.system import System_Object
 
 ###########################
 # Create a ScaleIO System #
@@ -24,9 +37,12 @@ from pprint import pprint
 ###################
 nodeUsername = 'root' # Username for ScaleIO Node OS (these machines need to be pre installed)
 nodePassword = 'vagrant' # Password for ScaleIO Node OS
-node1 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.11'], None, 'linux', nodePassword, nodeUsername)
-node2 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.12'], None, 'linux', nodePassword, nodeUsername)
-node3 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.13'], None, 'linux', nodePassword, nodeUsername)
+#node1 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.11'], None, 'linux', nodePassword, nodeUsername)
+#node2 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.12'], None, 'linux', nodePassword, nodeUsername)
+#node3 = sioobj.ScaleIO_Node_Object(None, None, ['192.168.102.13'], None, 'linux', nodePassword, nodeUsername)
+node1 = sioobj.Node_Object(None, None, ['192.168.102.11'], None, 'linux', nodePassword, nodeUsername)
+node2 = sioobj.Node_Object(None, None, ['192.168.102.12'], None, 'linux', nodePassword, nodeUsername)
+node3 = sioobj.Node_Object(None, None, ['192.168.102.13'], None, 'linux', nodePassword, nodeUsername)
 
 ##########################################
 # Construct basic info for System_Object #
@@ -88,11 +104,11 @@ remoteSyslogConfiguration = sioobj.Remote_Syslog_Configuration_Object(remoteSysl
 #sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', 'faultset1', node1.nodeIPs, None, None, None, False, '7072')
 
 sds1 = sioobj.Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', None, node1.nodeIPs, None, None, None, False, '7072')
-sds1.addDevice("/home/vagrant/scaleio1", None, None)
+sds1.addDevice("/dev/loop0", None, None)
 sds2 = sioobj.Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', None, node2.nodeIPs, None, None, None, False, '7072')
-sds2.addDevice("/home/vagrant/scaleio1", None, None)
+sds2.addDevice("/dev/loop0", None, None)
 sds3 = sioobj.Sds_Object(json.loads(node3.to_JSON()), None, 'SDS_' + str(node3.nodeIPs[0]), 'default', None, node3.nodeIPs, None, None, None, False, '7072')
-sds3.addDevice("/home/vagrant/scaleio1", None, None)
+sds3.addDevice("/dev/loop0", None, None)
 sdsList.append(json.loads(sds1.to_JSON()))
 sdsList.append(json.loads(sds2.to_JSON()))
 sdsList.append(json.loads(sds3.to_JSON()))
@@ -117,7 +133,7 @@ sdcList.append(json.loads(sdc3.to_JSON()))
 ######################################################
 # Construct a complete ScaleIO cluster configuration #
 ######################################################
-sioobj = sioobj.ScaleIO_System_Object(installationId,
+sioobj = sioobj.System_Object(installationId,
                                mdmIPs,
                                mdmPassword,
                                liaPassword,
@@ -133,17 +149,15 @@ sioobj = sioobj.ScaleIO_System_Object(installationId,
 
 # Export sioobj to JSON (should upload clean in IM)s
 
-
 ###########################################################################
 # Push System_Object JSON - To be used by IM to install ScaleIO on nodes #
 ###########################################################################
 
 
-
 #######################
 # LOGIN TO SCALEIO IM #
 #######################
-imconn = im.Im("https://192.168.102.12","admin","Scaleio123",verify_ssl=False) # "Password1!") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
+imconn = Im("https://192.168.102.12","admin","Scaleio123",verify_ssl=False) # "Password1!") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
 imconn._login()
 
 ### UPLOAD RPM PACKAGES TO BE DEPLOYED BY IM ###
@@ -155,7 +169,7 @@ imconn.uploadPackages('/Users/swevm/Downloads/RHEL6_1277/') # Adjust to your nee
 ####################
 
 # Initialize Installer
-im_installer = im.InstallerFSM(imconn, True)
+im_installer = InstallerFSM(imconn, True)
 
 time.sleep(5) # Wait a few seconds before continuing - Not necessary
 

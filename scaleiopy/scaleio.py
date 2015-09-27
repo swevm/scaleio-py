@@ -10,457 +10,24 @@ import time
 import sys
 import logging
 
-from scaleioutil import ScaleIOLogger
+from pprint import pprint
 
-#from pprint import pprint
-
-class SIO_Generic_Object(object):
-    @classmethod
-    def get_class_name(cls):
-        """
-        A helper method that returns the name of the class.  Used by __str__ below
-        """
-        return cls.__name__
-
-    def __str__(self):
-        """
-        A convenience method to pretty print the contents of the class instance
-        """
-        # to show include all variables in sorted order
-        return "<{}> @ {}:\n".format(self.get_class_name(), id(self)) + "\n".join(
-            ["  %s: %s" % (key.rjust(22), self.__dict__[key]) for key in sorted(set(self.__dict__))])
-
-    def __repr__(self):
-        return self.__str__()
-
-class ScaleIO_System(SIO_Generic_Object):
-    """ Represents one ScaleIO cluster/installation as a class object  - Owns other classes that represents differenct ScaleIO components """
-    
-    def __init__(self,
-        id=None,
-        name=None,
-        systemVersionName=None,
-        primaryMdmActorIpList = None, #List
-        primaryMdmActorPort = None,
-        secondaryMdmActorIpList = None, #List
-        secondaryMdmActorPort = None, 
-        tiebreakerMdmIpList = None,  #List
-        tiebreakerMdmPort = None, # This one is defined in ScaleIO 1.30 API, but seem not present in 1.31??
-        tiebreakerMdmActorPort = None,
-        mdmMode = None, #Single or Cluster
-        mdmClusterState = None, # NotClustered or ClusteredNormal or ClusteredDegraded or ClusteredTiebreakerDown or ClusteredDegradedTiebreakerDown
-        mdmManagementIpList = None, # List
-        mdmManagementPort = None, 
-        capacityAlertHighThresholdPercent = None,
-        capacityAlertCriticalThresholdPercent = None,
-        installId = None, 
-        swid = None, # This one seem not to return anything. Its define din 1.30. What about 1.31????
-        daysInstalled = None, 
-        maxCapacityInGb = None,
-        capacityTimeLeftInDays = None, 
-        enterpriseFeaturesEnabled = None, 
-        defaultIsVolumeObfuscated = None,
-        isInitialLicense = None, 
-        restrictedSdcModeEnabled = None,
-        remoteReadOnlyLimitState = None,
-        links = None
-  
-    ):
-        self.id=id
-        self.name=None
-        self.system_version_name = systemVersionName
-        self.primary_mdm_actor_ip_list = []
-        for ip in primaryMdmActorIpList:
-            self.primary_mdm_actor_ip_list.append(ip)
-        self.primary_mdm_actor_port = primaryMdmActorPort
-        self.secondary_mdm_actor_ip_list = secondaryMdmActorIpList
-        self.secondary_mdm_actor_port = secondaryMdmActorPort 
-        self.tiebreaker_mdm_ip_list = tiebreakerMdmIpList
-        self.tiebreaker_mdm_port = tiebreakerMdmPort
-        self.tiebreaker_mdm_actor_port = tiebreakerMdmPort
-        self.mdm_mode = mdmMode
-        self.mdm_cluster_state = mdmClusterState
-        self.mdm_management_ip_list = mdmManagementIpList
-        self.mdm_management_port = mdmManagementPort 
-        self.capacity_alert_high_threshold_percent = capacityAlertHighThresholdPercent
-        self.capacity_alert_critical_threshold_percent = capacityAlertCriticalThresholdPercent
-        self.install_id = installId
-        self.swid = swid 
-        self.days_installed = daysInstalled 
-        self.max_capacity_in_gb = maxCapacityInGb
-        self.capacity_time_left_in_days = capacityTimeLeftInDays 
-        self.enterprise_features_enabled = enterpriseFeaturesEnabled
-        self.default_is_volume_obfuscated = defaultIsVolumeObfuscated
-        self.is_initial_license = isInitialLicense
-        self.restricted_sdc_mode_enabled = restrictedSdcModeEnabled
-        self.remote_readonly_limit_state = remoteReadOnlyLimitState
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'],link['rel']))        
-        
-
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_System(**dict)
-    
-class ScaleIO_Storage_Pool(SIO_Generic_Object):
-    """ ScaleIO Storage Pool Class representation """
-    
-    def __init__(self,
-        id=None,
-        name=None,
-        links=None,
-        sparePercentage=None,
-        rebuildEnabled=None,
-        rebalanceEnabled=None,
-        rebuildIoPriorityPolicy=None, #unlimited or limitNumOfConcurrentIos or favorAppIos or dynamicBwThrottling
-        rebalanceIoPriorityPolicy=None, 
-        rebuildIoPriorityNumOfConcurrentIosPerDevice=None, 
-        rebalanceIoPriorityNumOfConcurrentIosPerDevice=None, 
-        rebuildIoPriorityBwLimitPerDeviceInKbps=None, 
-        rebalanceIoPriorityBwLimitPerDeviceInKbps=None,
-        rebuildIoPriorityAppIopsPerDeviceThreshold=None, 
-        rebalanceIoPriorityAppIopsPerDeviceThreshold=None,
-        rebuildIoPriorityAppBwPerDeviceThresholdInKbps=None, 
-        rebalanceIoPriorityAppBwPerDeviceThresholdInKbps=None,
-        rebuildIoPriorityQuietPeriodInMsec=None,
-        rebalanceIoPriorityQuietPeriodInMsec=None,
-        numOfParallelRebuildRebalanceJobsPerDevice=None,
-        protectionDomainId=None, 
-        zeroPaddingEnabled=None,
-        useRmcache=None, 
-        rmcacheWriteHandlingMode=None, #Passthrough or Cached
-        # v1.32 specific
-        backgroundScannerMode = None, 
-        backgroundScannerBWLimitKBps = None
-    ):
-        self.id=id
-        self.name=name
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'], link['rel']))
-        self.spare_percentage=sparePercentage
-        self.rebuild_enabled=rebuildEnabled
-        self.rebalance_enabled=rebalanceEnabled
-        self.revuild_io_prioroti_policy=rebuildIoPriorityPolicy #unlimited or limitNumOfConcurrentIos or favorAppIos or dynamicBwThrottling
-        self.rebalance_prioritiy_policy=rebalanceIoPriorityPolicy
-        self.rebuild_io_prioroity_num_of_concurrent_ios_per_device=rebuildIoPriorityNumOfConcurrentIosPerDevice 
-        self.rebalance_io_priority_num_of_concurrent_ios_per_device=rebalanceIoPriorityNumOfConcurrentIosPerDevice 
-        self.revuild_io_priority_bw_limits_per_device_in_kbps=rebuildIoPriorityBwLimitPerDeviceInKbps 
-        self.rebalance_io_priority_bw_limit_per_device_in_kbps=rebalanceIoPriorityBwLimitPerDeviceInKbps
-        self.rebuild_io_priority_app_iops_per_device_threshold=rebuildIoPriorityAppIopsPerDeviceThreshold 
-        self.rebalance_io_priority_app_iops_per_devicE_threshold=rebalanceIoPriorityAppIopsPerDeviceThreshold
-        self.rebuild_io_priority_app_bw_per_device_threshold_in_kbps=rebuildIoPriorityAppBwPerDeviceThresholdInKbps 
-        self.rebalance_priority_apps_bw_per_device_threshold_in_kbps=rebalanceIoPriorityAppBwPerDeviceThresholdInKbps
-        self.rebuild_io_priority_quite_period_in_msec=rebuildIoPriorityQuietPeriodInMsec
-        self.reabalance_io_priority_quiet_period_in_msec=rebalanceIoPriorityQuietPeriodInMsec
-        self.num_of_parallel_rebuild_rebalance_job_per_device=numOfParallelRebuildRebalanceJobsPerDevice
-        self.protection_domain_id=protectionDomainId 
-        self.zero_padding_enabled=zeroPaddingEnabled
-        self.use_rm_cache=useRmcache 
-        self.rmcache_write_handling_mode=rmcacheWriteHandlingMode
-        # v1.32 specific
-        self.backgroundScanneMode = backgroundScannerMode
-        self.backgroundScannerBWLimitKBps = backgroundScannerBWLimitKBps
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_Storage_Pool(**dict)
-
-class ScaleIO_Protection_Domain(SIO_Generic_Object):
-    """ ScaleIO Protection Domain Class representation """
-    
-    def __init__(self,
-        id=None,
-        links=None,
-        name=None,
-        overallIoNetworkThrottlingEnabled=None,
-        overallIoNetworkThrottlingInKbps=None,
-        protectionDomainState=None,
-        rebalanceNetworkThrottlingEnabled=None,
-        rebalanceNetworkThrottlingInKbps=None,
-        rebuildNetworkThrottlingEnabled=None,
-        rebuildNetworkThrottlingInKbps=None,
-        systemId=None
-    ):
-        self.id=id
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'], link['rel']))
-        self.name=name
-        self.overall_network_throttle_enabled=overallIoNetworkThrottlingEnabled
-        self.overall_network_throttle_kbps=overallIoNetworkThrottlingInKbps
-        self.protection_domain_state=protectionDomainState
-        self.rebalance_network_throttle_enabled=rebalanceNetworkThrottlingEnabled
-        self.rebalance_network_throttle_kbps=rebalanceNetworkThrottlingInKbps
-        self.rebuild_network_throttle_enabled=rebuildNetworkThrottlingEnabled
-        self.rebuild_network_throttle_kbps=rebuildNetworkThrottlingInKbps
-        self.system_id=systemId
+# API specific imports
+from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
+from scaleiopy.api.scaleio.system import System
+from scaleiopy.api.scaleio.mapping.sdc import SDC
+from scaleiopy.api.scaleio.mapping.sds import SDS
+from scaleiopy.api.scaleio.mapping.volume import Volume
+from scaleiopy.api.scaleio.mapping.storage_pool import Storage_Pool
+from scaleiopy.api.scaleio.mapping.protection_domain import Protection_Domain
+from scaleiopy.api.scaleio.mapping.faultset import Fault_Set
+from scaleiopy.api.scaleio.mapping.ip_list import IP_List
+from scaleiopy.api.scaleio.mapping.link import Link
+from scaleiopy.api.scaleio.mapping.snapshotspecification import SnapshotSpecification
+from scaleiopy.api.scaleio.mapping.vtree import Vtree
 
 
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_Protection_Domain(**dict)
-
-class ScaleIO_Volume(SIO_Generic_Object):
-    """ ScaleIO Volume Class representation """
-    
-    def __init__(self,
-                 ancestorVolumeId=None,
-                 consistencyGroupId=None,
-                 creationTime=None,
-                 id=None,
-                 isObfuscated=None,
-                 links=False,
-                 mappedScsiInitiatorInfo=None,
-                 mappedSdcInfo=None,
-                 mappingToAllSdcsEnabled=None,
-                 name=None,
-                 sizeInKb=0,
-                 storagePoolId=None,
-                 useRmcache=False,
-                 volumeType=None,
-                 vtreeId=None
-    ):
-        self.id = id
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'], link['rel']))
-        self.ancestor_volume = ancestorVolumeId
-        self.consistency_group_id=consistencyGroupId
-        self.creation_time=time.gmtime(creationTime)
-        self.id=id
-        self.name = name
-        self.is_obfuscated = isObfuscated
-        self.mapped_scsi_initiators = mappedScsiInitiatorInfo
-        self.mapped_sdcs = mappedSdcInfo
-        self.size_kb = sizeInKb
-        self.storage_pool_id = storagePoolId
-        self.use_cache = useRmcache
-        self.volume_type = volumeType
-        self.vtree_id = vtreeId
-        self.mappingToAllSdcsEnabled = mappingToAllSdcsEnabled
-
-
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_Volume(**dict)
-
-class ScaleIO_SDC(SIO_Generic_Object):
-    """ ScaleIO SDC Class representation """
-    
-    def __init__(self,
-                 id=None,
-                 links=None,
-                 mdmConnectionState=None,
-                 name=None,
-                 onVmWare=None,
-                 sdcApproved=False,
-                 sdcGuid=None,
-                 sdcIp=None,
-                 systemId=None
-    ):
-
-        self.id = id
-        self.name = name
-        self.mdmConnectionState = mdmConnectionState
-        self.sdcIp = sdcIp
-        self.guid = sdcGuid
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'], link['rel']))
-
-
-
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_SDC(**dict)
-
-class ScaleIO_SDS(SIO_Generic_Object):
-    """ ScaleIO SDS Class representation """
-    
-    def __init__(self,
-                 drlMode=None,
-                 ipList=None,
-                 faultSetId=None,
-                 id=None,
-                 links=None,
-                 mdmConnectionState=None,
-                 membershipState=None,
-                 name=None,
-                 numOfIoBuffers=None,
-                 onVmWare=None,
-                 port=None,
-                 protectionDomainId=None,
-                 rmcacheEnabled=None,
-                 rmcacheFrozen=None,
-                 rmcacheMemoryAllocationState=None,
-                 rmcacheSizeInKb=None,
-                 sdsState=None
-                 ):
-        self.drl_mode = drlMode
-        self.ip_list = []
-        for ip in ipList:
-            self.ip_list.append(IP_List(ip['ip'],ip['role']))
-        self.fault_set_id = faultSetId
-        self.id = id
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'],link['rel']))
-        self.mdm_connection_state = mdmConnectionState
-        self.membership_state = membershipState
-        self.name = name
-        self.number_io_buffers = int(numOfIoBuffers)
-        self.on_vmware = onVmWare
-        self.port = port
-        self.protection_domain_id = protectionDomainId
-        self.rm_cache_enabled = rmcacheEnabled
-        self.rm_cache_frozen = rmcacheFrozen
-        self.rm_cachem_memory_allocation = rmcacheMemoryAllocationState
-        self.rm_cache_size_kb = rmcacheSizeInKb
-        self.sds_state=sdsState
-
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_SDS(**dict)
- 
-class ScaleIO_Vtree(SIO_Generic_Object):
-    """ ScaleIO VTree Class repreentation
-        For every Volume created there alway at least one VTree
-    """
-    
-    def __init__(self,
-        id=None,
-        name=None,
-        baseVolumeId=None,
-        storagePoolId=None,
-        links=None
-    ):
-        self.id=id
-        self.name=name
-        self.baseVolumeId=baseVolumeId
-        self.storagePoolId=storagePoolId
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'],link['rel']))
-            
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_Vtree(**dict)
-
-
-class ScaleIO_Fault_Set(SIO_Generic_Object):
-    """ ScaleIO Faultset Class repreentation """
-    
-    def __init__(self,
-        id=None,
-        name=None,
-        protectionDomainId=None,
-        links=None
-
-    ):
-        self.id=id
-        self.name=name
-        self.protectionDomainId=protectionDomainId
-        self.links = []
-        for link in links:
-            self.links.append(Link(link['href'],link['rel']))
-
-    @staticmethod
-    def from_dict(dict):
-        """
-        A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
-        JSON response from the server.
-        """
-        return ScaleIO_Fault_Set(**dict)
-    
-class SnapshotSpecification(SIO_Generic_Object):
-    """
-    Input: list of SIO Snapshot definitions
-            For example: { "snapshotDefs": [ {" volumeId":"2dd9132300000000", "snapshotName":"000_snap1"}, {"volumeId":"2dd9132300000004", "snapshotName":"004_snap1" }]}
-    If adding more than one Volume to a Snapshot definition it will autoamtically be trated as a consistency group
-    
-    Return:
-        volumeIdList snapshotGroupId
-        for example:
-        {"volumeIdList":[ "2dd9132400000001"], "snapshotGroupId":"d2e53daf00000001"}
-    """
-    def __init__(self):
-        self._snapshotList = []
-    
-    def addVolume(self, volObj, snapName=None):
-        if snapName is None:
-            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": volObj.name + "snapshot"})
-        else:
-            self._snapshotList.append({"volumeId": volObj.id, "snapshotName": snapName})
-
-    def removeVolume(self, volObj):
-        for i in range(len(self._snapshotList)):
-            if self._snapshotList[i]['volumeId'] == volObj.id:
-                del self._snapshotList[i]
-                break
-    
-    def __to_dict__(self):
-        return {"snapshotDefs" : self._snapshotList}
-
-
-class IP_List(object):
-    def __init__(self, ip, role):
-        self.ip = ip
-        self.role = role
-
-    def __str__(self):
-        """
-        A convenience method to pretty print the contents of the class instance
-        """
-        # to show include all variables in sorted order
-        return "{} : IP: {} Role: {}".format("IP",self.ip,self.role)
-
-    def __repr__(self):
-        return self.__str__()
-
-class Link(object):
-    def __init__(self, href, rel):
-        self.href = href
-        self.rel = rel
-
-    def __str__(self):
-        """
-        A convenience method to pretty print the contents of the class instance
-        """
-        # to show include all variables in sorted order
-        return "{} : Target: '{}' Relative: '{}'".format("Link", self.href, self.rel)
-
-    def __repr__(self):
-        return self.__str__()
-
+# How to remove this one. Let Requests inherit from this class???
 class TLS1Adapter(HTTPAdapter):
     """
     A custom HTTP adapter we mount to the session to force the use of TLSv1, which is the only thing supported by
@@ -470,7 +37,8 @@ class TLS1Adapter(HTTPAdapter):
         self.poolmanager = PoolManager(num_pools=connections,
                                        maxsize=maxsize,
                                        block=block,
-                                       ssl_version=ssl.PROTOCOL_TLSv1)
+                                       ssl_version=ssl.PROTOCOL_TLSv1)          
+                                       
 
 class ScaleIO(SIO_Generic_Object):
     """
@@ -507,11 +75,38 @@ class ScaleIO(SIO_Generic_Object):
         self._verify_ssl = verify_ssl
         self._logged_in = False
         self._api_version = None
-        requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.  
-        self.loggerInstance = ScaleIOLogger.get() # Create logger Singleton
-        self.logger = self.loggerInstance.getLoglevel(debugLevel) # Get logger instance with defined logging level
+        requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
+        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
+            level=self._get_log_level(debugLevel))
+        self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
         self._check_login() # Login. Otherwise login is called upon first API operation
+
+    @staticmethod
+    def _get_log_level(level):
+        """
+        small static method to get logging level
+        :param str level: string of the level e.g. "INFO"
+        :returns logging.<LEVEL>: appropriate debug level
+        """
+        # default to DEBUG
+        if level is None or level == "DEBUG":
+            return logging.DEBUG
+
+        level = level.upper()
+        # Make debugging configurable
+        if level == "INFO":
+            return logging.INFO
+        elif level == "WARNING":
+            return logging.WARNING
+        elif level == "CRITICAL":
+            return logging.CRITICAL
+        elif level == "ERROR":
+            return logging.ERROR
+        elif level == "FATAL":
+            return logging.FATAL
+        else:
+            raise Exception("UnknownLogLevelException: enter a valid log level")
 
     def _login(self):
         self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
@@ -604,7 +199,7 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_get("{}/{}".format(self._api_url, "types/System/instances")).json()
         all_system_objects = []
         for system_object in response:
-            all_system_objects.append(ScaleIO_System.from_dict(system_object))
+            all_system_objects.append(System.from_dict(system_object))
         return all_system_objects
 
     @property
@@ -618,7 +213,7 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_get("{}/{}".format(self._api_url, "types/StoragePool/instances")).json() 
         all_storage_pools = []
         for storage_pool_object in response:
-            all_storage_pools.append(ScaleIO_Storage_Pool.from_dict(storage_pool_object))
+            all_storage_pools.append(Storage_Pool.from_dict(storage_pool_object))
         return all_storage_pools
     
     @property
@@ -633,7 +228,7 @@ class ScaleIO(SIO_Generic_Object):
         all_sdc = []
         for sdc in response:
             all_sdc.append(
-                ScaleIO_SDC.from_dict(sdc)
+                SDC.from_dict(sdc)
             )
         return all_sdc
 
@@ -649,15 +244,15 @@ class ScaleIO(SIO_Generic_Object):
         all_sds = []
         for sds in response:
             all_sds.append(
-                ScaleIO_SDS.from_dict(sds)
+                SDS.from_dict(sds)
             )
         return all_sds
 
     @property
     def volumes(self):
         """
-        Returns a `list` of all the `ScaleIO_Volume` known to the cluster.  Updates every time - no caching.
-        :return: a `list` of all the `ScaleIO_Volume` known to the cluster.
+        Returns a `list` of all the `Volume` known to the cluster.  Updates every time - no caching.
+        :return: a `list` of all the `Volume` known to the cluster.
         :rtype: list
         """
         self._check_login()
@@ -665,7 +260,7 @@ class ScaleIO(SIO_Generic_Object):
         all_volumes = []
         for volume in response:
             all_volumes.append(
-                ScaleIO_Volume.from_dict(volume)
+                Volume.from_dict(volume)
             )
         return all_volumes
 
@@ -682,7 +277,7 @@ class ScaleIO(SIO_Generic_Object):
         for volume in response:
             if volume['volumeType'] == 'Snapshot':
                 all_volumes_snapshot.append(
-                    ScaleIO_Volume.from_dict(volume)
+                    Volume.from_dict(volume)
             )
         return all_volumes_snapshot
 
@@ -696,7 +291,7 @@ class ScaleIO(SIO_Generic_Object):
         all_pds = []
         for pd in response:
             all_pds.append(
-                ScaleIO_Protection_Domain.from_dict(pd)
+                Protection_Domain.from_dict(pd)
             )
         return all_pds
 
@@ -712,7 +307,7 @@ class ScaleIO(SIO_Generic_Object):
         all_faultsets = []
         for fs in response:
             all_faultsets.append(
-                ScaleIO_Fault_Set.from_dict(fs)
+                Fault_Set.from_dict(fs)
             )
         return all_faultsets
 
@@ -728,7 +323,7 @@ class ScaleIO(SIO_Generic_Object):
         all_vtrees = []
         for vtree in response:
             all_vtrees.append(
-                ScaleIO_Vtree.from_dict(vtree)
+                Vtree.from_dict(vtree)
             )
         return all_vtrees
 
@@ -744,8 +339,9 @@ class ScaleIO(SIO_Generic_Object):
         rtype: string
         """
         # API version scheme:
-        # 1.0 = 
-        # 1.1 = 
+        # 1.0 = < v1.32
+        # 1.1 =   v1.32
+        # x.x =   v 2.0
         return self._api_version 
     def get_sds_in_faultset(self, faultSetObj):
         """
@@ -758,7 +354,7 @@ class ScaleIO(SIO_Generic_Object):
         all_sds = []
         for fss in response:
             all_sds.append(
-                ScaleIO_SDS.from_dict(pd)
+                SDS.from_dict(pd)
             )
         return all_sds        
         
@@ -915,7 +511,7 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_get("{}/{}{}/{}".format(self._api_url, 'instances/Sdc::', sdcObj.id, 'relationships/Volume')).json()
         for sdc_volume in response:
             all_volumes.append(
-                ScaleIO_Volume.from_dict(sdc_volume)
+                Volume.from_dict(sdc_volume)
             )
         return all_volumes        
     
@@ -971,7 +567,7 @@ class ScaleIO(SIO_Generic_Object):
         response = self._do_get("{}/{}{}/{}".format(self._api_url, 'instances/VTree::', vtreeObj.id, 'relationships/Volume')).json()
         for vtree_volume in response:
             all_volumes.append(
-                ScaleIO_Volume.from_dict(vtree_volume)
+                Volume.from_dict(vtree_volume)
             )
         return all_volumes
 

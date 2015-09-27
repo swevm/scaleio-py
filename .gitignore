@@ -14,9 +14,14 @@ eggs/
 lib/
 lib64/
 parts/
+build/
 sdist/
+dist/
 var/
+venv/
 *.egg-info/
+*.komodotools/
+*.komodoproject
 .installed.cfg
 *.egg
 # PyInstaller

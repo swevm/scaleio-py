@@ -12,8 +12,21 @@ import time
 from os import listdir
 from os.path import isfile, join
 import logging
-from scaleioobject import *
-from installerfsm import *
+
+# API specific imports
+#from scaleiopy.util.tls1adapter import TLS1Adapter
+
+from api.im.mapping.im_generic_object import Im_Generic_Object
+
+from scaleiopy.api.im.mapping.node import Node_Object
+from scaleiopy.api.im.mapping.mdm import Mdm_Object
+from scaleiopy.api.im.mapping.callhome_configuration import Call_Home_Configuration_Object
+from scaleiopy.api.im.mapping.tb import Tb_Object
+from scaleiopy.api.im.mapping.syslog_configuration import Remote_Syslog_Configuration_Object
+from scaleiopy.api.im.mapping.sdc import Sdc_Object
+from scaleiopy.api.im.mapping.sds import Sds_Object
+from scaleiopy.api.im.mapping.sds_device import Sds_Device_Object
+from scaleiopy.api.im.system import System_Object
 
 class TLS1Adapter(HTTPAdapter):
     """
@@ -26,31 +39,6 @@ class TLS1Adapter(HTTPAdapter):
                                        block=block,
                                        ssl_version=ssl.PROTOCOL_TLSv1)
 
-class Im_Generic_Object(object):
-    @classmethod
-    def get_class_name(cls):
-        """
-        A helper method that returns the name of the class.  Used by __str__ below
-        """
-        return cls.__name__
-
-    def __str__(self):
-        """
-        A convenience method to pretty print the contents of the class instance
-        """
-        # to show include all variables in sorted order
-        return "<{}> @ {}:\n".format(self.get_class_name(), id(self)) + "\n".join(
-            ["  %s: %s" % (key.rjust(22), self.__dict__[key]) for key in sorted(set(self.__dict__))])
-
-    def __repr__(self):
-        return self.__str__()
-
-    def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__)
-
-    def to_DICT(self):
-        return self.__dict__
-    
 class Im(Im_Generic_Object):
     """
     The IM class provides a pythonic way to interact with and manage a ScaleIO cluster using Installation Manager 'private' API/
@@ -68,6 +56,7 @@ class Im(Im_Generic_Object):
         :return: A ScaleIO object
         :rtype: ScaleIO
         """
+
         self._username = username
         self._password = password
         self._im_api_url = api_url
@@ -79,10 +68,38 @@ class Im(Im_Generic_Object):
         requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         self._cluster_config_cached = None
         self._cache_contains_uncommitted = None
-        self.loggerInstance = ScaleIOLogger.get() # Create logger Singleton
-        self.logger = self.loggerInstance.getLoglevel(debugLevel) # Get logger instance with defined logging level
+        logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
+            level=self._get_log_level(debugLevel))
+        self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
+        
         self.SIO_Configuration_Object = None # Holds a DICT representation of the ScaleIO System Configuration
+        
+    @staticmethod
+    def _get_log_level(level):
+        """
+        small static method to get logging level
+        :param str level: string of the level e.g. "INFO"
+        :returns logging.<LEVEL>: appropriate debug level
+        """
+        # default to DEBUG
+        if level is None or level == "DEBUG":
+            return logging.DEBUG
+
+        level = level.upper()
+        # Make debugging configurable
+        if level == "INFO":
+            return logging.INFO
+        elif level == "WARNING":
+            return logging.WARNING
+        elif level == "CRITICAL":
+            return logging.CRITICAL
+        elif level == "ERROR":
+            return logging.ERROR
+        elif level == "FATAL":
+            return logging.FATAL
+        else:
+            raise Exception("UnknownLogLevelException: enter a valid log level")
 
     def _get_cached_config_json(self):
         return self._cluster_config_cached
@@ -107,7 +124,8 @@ class Im(Im_Generic_Object):
             verify=self._im_verify_ssl,
             #headers = {'Content-Type':'application/x-www-form-urlencoded', 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.99 Safari/537.36'},
             data=payload)
-        #self.logger.debug("Login POST response: " + "{}".format(r.text))
+        self.logger.debug("Login POST response: " + "{}".format(r.text))
+
         self._im_logged_in = True
         
         """
@@ -139,7 +157,9 @@ class Im(Im_Generic_Object):
                     scaleio_get_headersvalue = value
 
         try:
+            #response = self._im_session.get("{}/{}".format(self._api_url, uri), headers = scaleioapi_get_headers, payload = scaleio_payload).json()
             response = self._im_session.get("{}/{}".format(self._api_url, uri), **kwargs).json()
+            #response = self._session.get(url, headers=scaleioapi_post_headers, **kwargs)
             if response.status_code == requests.codes.ok:
                 return response
             else:
@@ -211,15 +231,16 @@ class Im(Im_Generic_Object):
  
     def get_installation_instances(self):
         self.logger.debug("/types/Installation/instances")
+        #print "/types/Installation/instances/"
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/Installation/instances'))
-        self.logger.debug("Response: " + "{}".format(resp.text))
+        #print resp.text
 
     def get_state(self, count=None):
         self.logger.debug("/types/State/instances")
         payload = {'_':'1425822717883'}
         referer = 'https://192.168.100.12/install.jsp'
+        #resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/State/instances/'), params = payload)
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/State/instances/'))
-        self.logger.debug("Response: " + "{}".format(resp.text))
         return resp.text
     
     def set_state(self, state):
@@ -227,44 +248,55 @@ class Im(Im_Generic_Object):
         self.logger.debug("set_state(" + "{})".format(state) )
         if state == 'query':
             resp = self._im_session.put("{}/{}".format(self._im_api_url,"types/State/instances/"),data =json.dumps({"state":"query"}), headers={'Content-Type':'application/json'})
-            self.logger.debug("Response: " + "{}".format(resp.text))
+            #print "PUT Request URL: " + resp.url
+            #print "QUERY Response:"
+            #print resp.text
             return True
         if state == 'upload':
             resp = self._im_session.put("{}/{}".format(self._im_api_url,"types/State/instances/"),data =json.dumps({"state":"upload"}), headers={'Content-Type':'application/json'})
-            self.logger.debug("Response: " + "{}".format(resp.text))
+            #print "PUT Request URL: " + resp.url
+            #print "UPLOAD Response:"
+            #print resp.text
             return True
         if state == 'install':
             resp = self._im_session.put("{}/{}".format(self._im_api_url,"types/State/instances/"),data =json.dumps({"state":"install"}), headers={'Content-Type':'application/json'})
-            self.logger.debug("Response: " + "{}".format(resp.text))
             return True
+            #print "PUT Request URL: " + resp.url
+            #print "INSTALL Response:"
+            #print resp.text
         if state == 'configure':
             resp = self._im_session.put("{}/{}".format(self._im_api_url,"types/State/instances/"),data =json.dumps({"state":"configure"}), headers={'Content-Type':'application/json'})
-            self.logger.debug("Response: " + "{}".format(resp.text))
             return True
+            #print "PUT Request URL: " + resp.url
+            #print "CONFIGURE Response:"
+            #print resp.text
         return False
     
     def set_abort_pending(self, newstate):
         """
         Method to set Abort state if something goes wrong during provisioning
         Method also used to finish provisioning process when all is completed
-        
-        This method can be used to re-run failed IM tasks I believe - RESEARCH HOW
-
         Method: POST
         """
         self.logger.debug("set_abort_pending(" + "{})".format(newstate))
-        resp = self._im_session.post(
+        # NOT TO BE USED
+        #default_minimal_cluster_config = '{"installationId":null,"mdmIPs":["192.168.102.12","192.168.102.13"],"mdmPassword":"Scaleio123","liaPassword":"Scaleio123","licenseKey":null,"primaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.102.12"]},"secondaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.102.13"]},"tb":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"tbIPs":["192.168.102.11"]},"sdsList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.11]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.11"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.12]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.12"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.13]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.13"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072}],"sdcList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null}],"callHomeConfiguration":null,"remoteSyslogConfiguration":null}'
+        r1 = self._im_session.post(
             "{}/{}".format(self._im_api_url,"types/Command/instances/actions/abortPending"),
             headers={'Content-type':'application/json','Version':'1.0'}, 
             verify=self._im_verify_ssl,
             data = newstate,
             stream=True
         )
-        if not resp.ok:
+        if not r1.ok:
             # Something went wrong
-            self.logger.error("Error Response: " + "{}".format(resp.text))
-        self.logger.debug("Response: " + "{}".format(resp.text))
-        return resp.text
+            self.logger.error("Error set_abort_pending(" +"{})".format(newstate))
+
+        #print "Response after set_abort_pending()"
+        # RESPONSE NEED TO BE WRAPPED IN try/catch. Cannot assume JSON is returned.
+        #print r1.text
+        #pprint (json.loads(r1.text))
+        return r1.text
 
     def set_archive_all(self):
         """
@@ -273,17 +305,22 @@ class Im(Im_Generic_Object):
         """
         self.logger.debug("set_archive_all()")
 
-        resp = self._im_session.post(
+        r1 = self._im_session.post(
             "{}/{}".format(self._im_api_url,"types/Command/instances/actions/archiveAll"),
             headers={'Content-type':'application/json','Version':'1.0'}, 
             verify=self._im_verify_ssl,
             data = '',
             stream=True
         )
-        if not resp.ok:
+        if not r1.ok:
             # Something went wrong
-            self.logger.error("Response: " + "{}".format(resp.text))
-        return resp.text
+            self.logger.error("Error code: " + "{}".format(r1.status_code))
+        
+        #print "Response after set_archive_all()"
+        # RESPONSE NEED TO BE WRAPPED IN tey/catch. Can?t assume JSON is returned.
+        #print r1.text
+        #pprint (json.loads(r1.text))
+        return r1.text
 
     def get_version(self):
         self.logger.debug("get_version()")
@@ -299,8 +336,9 @@ class Im(Im_Generic_Object):
         parameter = {'onlyLatest':'False'}
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/InstallationPackageWithLatest/instances'), params=parameter)
         #resp = self._im_session.get('https://192.168.100.52/types/InstallationPackageWithLatest/instances', params=parameter)
-        #jresp = json.loads(resp.text)
-        return json.loads.resp.text
+        jresp = json.loads(resp.text)
+
+        #pprint(jresp)
 
     def get_installation_packages(self):
         """
@@ -309,53 +347,65 @@ class Im(Im_Generic_Object):
         self.logger.debug("get_installation_packages()")
         parameter = {'onlyLatest':'False'}
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/InstallationPackageWithLatest/instances'), params=parameter)
-        self.logger.debug("Response: " + "{}".format(resp.text))
         #resp = self._im_session.get('https://192.168.100.52/types/InstallationPackageWithLatest/instances', params=parameter)
-        #jresp = json.loads(resp.text)
-        return json.loads(resp.text)
+        jresp = json.loads(resp.text)
+        #pprint(jresp.text)
+        return jresp
     
     def get_command_state(self, count=None):
         self.logger.debug("get_command_state(" + "{})".format(count))
+        #print "/types/Command/instances"
+        #payload = {'_':'1425822717883'} # What do this mean?
+        #resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/Command/instances/'), params = payload)
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/Command/instances'))
-        self.logger.debug("Response: " + "{}".format(resp.text))        
+        #resp = self._im_session.get('https://192.168.100.42/types/Command/instances').json()
+        #print "URL: " + resp.url
+        #pprint (resp.text)
         return resp.text
         
     def get_nodeinfo_instances(self):
         self.logger.debug("/types/NodeInfo/instances/actions/downloadGetInfo")
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/NodeInfo/instances/actions/downloadGetInfo'))
-        self.logger.debug("Response: " + "{}".format(resp.text))
+        #resp = self._im_session.get('https://192.168.100.42/types/NodeInfo/instances/actions/downloadGetInfo')
+        #pprint (resp.text)
 
     def get_configuration_instances(self, count=None):
         self.logger.debug("/types/Configuration/instances")
         payload = {'_':''}
         resp = self._im_session.get("{}/{}".format(self._im_api_url, 'types/Configuration/instances/'))
-        self.logger.debug("Response: " + "{}".format(resp.text))
+        #resp = self._im_session.get('https://192.168.100.42/types/Configuration/instances')
+        #pprint (resp.text)
 
     def get_cluster_topology(self, mdmIP, mdmPassword, liaPassword=None):
         # Topology is returned as a file. Save it into a string. Parse as JSON.
         # When adding nodes to existing ScaleIO cluster using IM all node change are driven by changing topology CSV file.
-
+        
+        
+        #print "Get Topology - Import into ScaleIO_Configuration_Object"
+        
+        #print "IM SESSION OBJECT:"
+        #pprint (self._im_session)
         self.logger.debug("get_cluster_topology(" + "{},{},{}".format(mdmIP, mdmPassword, liaPassword))
 
-        payload = {'mdmIps':[mdmIP],'mdmPassword':mdmPassword} #,'liaPassword':liaPassword}
+        pay1 = {'mdmIps':[mdmIP],'mdmPassword':mdmPassword} #,'liaPassword':liaPassword}
         #pay1 = {'mdmIp':'192.168.100.42','mdmPassword':'Password1!','liaPassword':'Password1!'}
-        resp = self._im_session.post(
+        r1 = self._im_session.post(
             "{}/{}".format(self._im_api_url,"types/Configuration/instances/actions/refreshAndGet"),
             headers={'Content-type':'application/json','Version':'1.0'},
             verify=self._im_verify_ssl,
-            json=payload,
+            json=pay1,
             stream=True
         )
-        if not resp.ok:
+        if not r1.ok:
             # Something went wrong
             self.logger.error("Could not fetch congiuration from remote IM")
-        self.logger.debug("POST response: " + "{}".format(resp.text))
-        return resp.text
+        self.logger.debug("POST response: " + "{}".format(r1.text))
+        return r1.text
     
     def retrieve_scaleio_cluster_configuration(self, mdmIP, mdmPassword, liaPassword=None):
         self.logger.debug("retrieve_scaleio_cluster_configuration(" + "{},{},{}".format(mdmIP, mdmPassword, liaPassword))
         sysconf_json = self.get_cluster_topology(mdmIP, mdmPassword, liaPassword)
-        confObj = ScaleIO_System_Object.from_dict(json.loads(sysconf_json)) ### TODO: Remove JSON conversion. Not needed!!!
+        confObj = ScaleIO_System_Object.from_dict(json.loads(sysconf_json))
         confObj.setMdmPassword(mdmPassword)
         confObj.setLiaPassword(liaPassword)
         self._cluster_config_cached = confObj
@@ -364,7 +414,7 @@ class Im(Im_Generic_Object):
     def populate_scaleio_cluster_configuration_cache(self, mdmIP, mdmPassword, liaPassword=None):
         self.logger.debug("populate_scaleio_cluster_configuration_cache(" + "{},{},{}".format(mdmIP, mdmPassword, liaPassword))
         sysconf_json = self.get_cluster_topology(mdmIP, mdmPassword, liaPassword)
-        confObj = ScaleIO_System_Object.from_dict(json.loads(sysconf_json)) ### TODO: Remove JSON conversion. Not needed!!!
+        confObj = ScaleIO_System_Object.from_dict(json.loads(sysconf_json))
         confObj.setMdmPassword(mdmPassword)
         confObj.setLiaPassword(liaPassword)
         self._cluster_config_cached = confObj
@@ -390,12 +440,176 @@ class Im(Im_Generic_Object):
                 file.close()
         self._cluster_config_cached = confObj # Read file contents into in-memory cluster configuration cache
         self._cache_contains_uncommitted = False
+
+    def push_cached_cluster_configuration(self, mdmPassword, liaPassword, noUpload = False, noInstall= False, noConfigure = False):
+        """
+        Method push cached ScaleIO cluster configuration to IM (reconfigurations that have been made to cached configuration are committed using IM)
+        Method: POST
+        Attach JSON cluster configuration as request payload (data). Add MDM and LIA passwords)
+        """
+        self.logger.debug("push_cached_cluster_configuration(" + "{},{},{},{},{}".format(mdmPassword, liaPassword, noUpload, noInstall, noConfigure))
+        config_params = {'noUpload': noUpload, 'noInstall': noInstall, 'noConfigure':noConfigure}
+        #print "Push cached ScaleIO cluster configuration to IM"
+        self._cluster_config_cached.setMdmPassword(mdmPassword)
+        self._cluster_config_cached.setLiaPassword(liaPassword)
+        self.logger.debug("Push JSON data:")
+        self.logger.debug("{}".format(self._cluster_config_cached.to_JSON()))
+
+        ####### FINISH METOD - CAN ONLY PUSH - USE CACHE
+        # SDS configured to use /home/scaleio1
+        #default_minimal_cluster_config = '{"installationId":null,"mdmIPs":["192.168.102.12","192.168.102.13"],"mdmPassword":"Scaleio123","liaPassword":"Scaleio123","licenseKey":null,"primaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.102.12"]},"secondaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.102.13"]},"tb":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"tbIPs":["192.168.102.11"]},"sdsList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.11]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.11"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.12]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.12"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.102.13]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.102.13"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/home/vagrant/scaleio1","storagePool":null,"deviceName":null}],"optimized":false,"port":7072}],"sdcList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.11"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.12"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.102.13"],"domain":null,"userName":"root","password":"vagrant","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null}],"callHomeConfiguration":null,"remoteSyslogConfiguration":null}'
+        
+        # Generated with scelio_object.py - Progammatically generated JSON using a set of classes that represent different ScaleIO components
+        default_minimal_cluster_config = '{"licenseKey": null, "mdmPassword": "Scaleio123", "mdmIPs": ["192.168.102.12", "192.168.102.13"], "sdsList": [{"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.11"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "protectionDomain": "default", "nodeInfo": null, "sdsName": "SDS_192.168.102.11", "sdcOnlyIPs": [], "optimized": false, "devices": [{"devicePath": "/home/vagrant/scaleio1", "storagePool": null, "deviceName": null}], "faultSet": null, "port": "7072", "sdsOnlyIPs": [], "allIPs": ["192.168.102.11"]}, {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.12"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "protectionDomain": "default", "nodeInfo": null, "sdsName": "SDS_192.168.102.12", "sdcOnlyIPs": [], "optimized": false, "devices": [{"devicePath": "/home/vagrant/scaleio1", "storagePool": null, "deviceName": null}], "faultSet": null, "port": "7072", "sdsOnlyIPs": [], "allIPs": ["192.168.102.12"]}, {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.13"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "protectionDomain": "default", "nodeInfo": null, "sdsName": "SDS_192.168.102.13", "sdcOnlyIPs": [], "optimized": false, "devices": [{"devicePath": "/home/vagrant/scaleio1", "storagePool": null, "deviceName": null}], "faultSet": null, "port": "7072", "sdsOnlyIPs": [], "allIPs": ["192.168.102.13"]}], "liaPassword": "Scaleio123", "primaryMdm": {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.12"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "managementIPs": [], "mdmIPs": ["192.168.102.12"]}, "callHomeConfiguration": null, "installationId": null, "secondaryMdm": {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.13"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "managementIPs": [], "mdmIPs": ["192.168.102.13"]}, "sdcList": [{"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.11"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "splitterRpaIp": null}, {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.12"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "splitterRpaIp": null}, {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.13"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "splitterRpaIp": null}], "tb": {"node": {"userName": "root", "domain": null, "nodeName": null, "nodeIPs": ["192.168.102.11"], "liaPassword": null, "ostype": "linux", "password": "vagrant"}, "nodeInfo": null, "tbIPs": ["192.168.102.11"]}, "remoteSyslogConfiguration": null}'        
+        #
+        #default_minimal_cluster_config = '{"installationId":null,"mdmIPs":["192.168.100.51","192.168.100.52"],"mdmPassword":"Password1!","liaPassword":"Password1!","licenseKey":null,"primaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.51"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.100.51"]},"secondaryMdm":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.52"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"managementIPs":null,"mdmIPs":["192.168.100.52"]},"tb":{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.53"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"tbIPs":["192.168.100.53"]},"sdsList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.51"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.100.51]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.100.51"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/dev/sdb","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.52"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.100.52]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.100.52"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/dev/sdb","storagePool":null,"deviceName":null}],"optimized":false,"port":7072},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.53"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"sdsName":"SDS_[192.168.100.53]","protectionDomain":"default","faultSet":null,"allIPs":["192.168.100.53"],"sdsOnlyIPs":null,"sdcOnlyIPs":null,"devices":[{"devicePath":"/dev/sdb","storagePool":null,"deviceName":null}],"optimized":false,"port":7072}],"sdcList":[{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.51"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.52"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null},{"node":{"ostype":"linux","nodeName":null,"nodeIPs":["192.168.100.53"],"domain":null,"userName":"root","password":"password","liaPassword":null},"nodeInfo":null,"splitterRpaIp":null}],"callHomeConfiguration":null,"remoteSyslogConfiguration":null}'
+        
+        #print "JSON DUMP OF INSTALL CONFIG:"
+        #pprint (json.loads(default_minimal_cluster_config))
+        
+        r1 = self._im_session.post(
+            "{}/{}".format(self._im_api_url,"types/Installation/instances/"),
+            headers={'Content-type':'application/json','Version':'1.0'},
+            params = config_params, 
+            verify=self._im_verify_ssl,
+            #json=json.loads(self._cluster_config_cached.to_JSON()),
+            json = json.loads(default_minimal_cluster_config),
+            stream=True
+        )
+        if not r1.ok:
+            # Something went wrong
+            self.logger.error("Error push_cached_cluster_configuration()")
+        
+        #print "Response after push_cached_cluster_configuration()"
+        
+        # RESPONSE NEED TO BE WRAPPED IN tey/catch. Can?t assume JSON is returned.
+        self.logger.debug("HTTP Response:")
+        self.logger.debug("{}".format(r1.text))
+        return r1.text
     
     def add_sds_to_cluster(self, sdsobject):
         self.logger.debug("add_sds_to_cluster(" + "{})".format(sdsobject))
         self._cluster_config_cached.sdsList.append(sdsobject)
         self._cache_contains_uncommitted = True
                 
+    def create_minimal_scaleio_cluster(self, mdmPassword, liaPassword):
+        """
+        Using IM this method create a 3-node ScaleIO cluster with 2xMDM, 1xTB, 3x SDS (using /dev/sdb), 3x SDC
+        """
+        """
+        self.read_cluster_config_from_disk("minimal-cluster.json")
+        #self._cluster_config_cached.setMdmPassword(setMdmPassword)
+        #self._cluster_config_cached.setLiaPassword(setLiaPassword)
+        self.push_cached_cluster_configuration(setMdmPassword, setLiaPassword)
+        """
+        
+        ###########################
+        # Create a ScaleIO System #
+        ###########################
+        # Flow:
+        # Create Nodes
+        # Create basic info. mdmPass, liaPass and some others
+        # Construct MDM and TB and basic info
+        # Create list of SDS
+        # Create list of SDC
+        
+        
+        ###################
+        # Construct nodes #
+        ###################
+        nodeUsername = 'root'
+        nodePassword = 'password'
+        #node1 = ScaleIO_Node_Object(None, None, ['192.168.102.11'], None, 'linux', nodePassword, nodeUsername)
+        #node2 = ScaleIO_Node_Object(None, None, ['192.168.102.12'], None, 'linux', nodePassword, nodeUsername)
+        #node3 = ScaleIO_Node_Object(None, None, ['192.168.102.13'], None, 'linux', nodePassword, nodeUsername)
+        node1 = ScaleIO_Node_Object(None, None, ['192.168.100.101'], None, 'linux', nodePassword, nodeUsername)
+        node2 = ScaleIO_Node_Object(None, None, ['192.168.100.102'], None, 'linux', nodePassword, nodeUsername)
+        node3 = ScaleIO_Node_Object(None, None, ['192.168.100.103'], None, 'linux', nodePassword, nodeUsername)
+        print "Node Object:"
+        pprint (node1.to_JSON())
+        pprint (node2.to_JSON())
+        pprint (node2.to_JSON())
+        print ""
+            
+        ##########################################
+        # Construct basic info for System_Object #
+        ##########################################
+        mdmIPs = ['192.168.100.101','192.168.100.102']
+        sdcList = []
+        sdsList = []
+        #mdmPassword = 'Scaleio123'
+        #liaPassword = 'Scaleio123'
+        licenseKey = None
+        installationId = None
+     
+        ########################################
+        # Create MDMs and TB for System_Object #
+        ########################################
+        primaryMdm = Mdm_Object(json.loads(node2.to_JSON()), None, None, node2.nodeIPs) # WHY ISNT ManagementIPs pupulated???? Its not in a working config either. mdmIPs need to be populated though
+        secondaryMdm = Mdm_Object(json.loads(node3.to_JSON()), None, None, node3.nodeIPs)
+        tb = Tb_Object(json.loads(node1.to_JSON()), None, node1.nodeIPs)
+        callHomeConfiguration = None # {'callHomeConfiguration':'None'}
+        remoteSyslogConfiguration = None # {'remoteSysogConfiguration':'None'}
+        
+        ################################################################
+        #Create SDS objects - To be added to SDS list in System_Object #
+        ################################################################
+        sds1 = Sds_Object(json.loads(node1.to_JSON()), None, 'SDS_' + str(node1.nodeIPs[0]), 'default', None, node1.nodeIPs, None, None, None, False, '7072')
+        sds1.addDevice("/dev/sdb", None, None)
+        sds2 = Sds_Object(json.loads(node2.to_JSON()), None, 'SDS_' + str(node2.nodeIPs[0]), 'default', None, node2.nodeIPs, None, None, None, False, '7072')
+        sds2.addDevice("/dev/sdb", None, None)
+        sds3 = Sds_Object(json.loads(node3.to_JSON()), None, 'SDS_' + str(node3.nodeIPs[0]), 'default', None, node3.nodeIPs, None, None, None, False, '7072')
+        sds3.addDevice("/dev/sdb", None, None)
+        sdsList.append(json.loads(sds1.to_JSON()))
+        sdsList.append(json.loads(sds2.to_JSON()))
+        sdsList.append(json.loads(sds3.to_JSON()))
+        print "sdsList:"
+        pprint (sdsList)
+    
+        #############################################################
+        # Create SDC objects - To be added as list to System_Object #
+        #############################################################
+        """
+        node=None,
+        nodeInfo=None,
+        splitterRpaIp=None
+        """
+        sdc1 = Sdc_Object(json.loads(node1.to_JSON()), None, None)
+        sdc2 = Sdc_Object(json.loads(node2.to_JSON()), None, None)
+        sdc3 = Sdc_Object(json.loads(node3.to_JSON()), None, None)
+        
+        sdcList.append(json.loads(sdc1.to_JSON()))
+        sdcList.append(json.loads(sdc2.to_JSON()))
+        sdcList.append(json.loads(sdc3.to_JSON()))
+        
+        ######################################################
+        # Construct a complete ScaleIO cluster configuration #
+        ######################################################
+        sioobj = ScaleIO_System_Object(installationId,
+                                       mdmIPs,
+                                       mdmPassword,
+                                       liaPassword,
+                                       licenseKey,
+                                       json.loads(primaryMdm.to_JSON()),
+                                       json.loads(secondaryMdm.to_JSON()),
+                                       json.loads(tb.to_JSON()),
+                                       sdsList,
+                                       sdcList,
+                                       callHomeConfiguration,
+                                       remoteSyslogConfiguration
+                                       )
+    
+        # Export sioobj to JSON (should upload clean in IM)
+        
+
+        ###########################################################################
+        # Push System_Object JSON - To be used by IM to install ScaleIO on nodes #
+        ###########################################################################
+        #pprint (sioobj.to_JSON())
+        self._cluster_config_cached = sioobj.to_JSON() # PUSH CONFIGURATION INTO CONFIGURATION CACHE
+        self._cache_contains_uncommitted= False # New config pushed into cache - Nothing oncommitted
+        self.push_cluster_configuration(self._cluster_config_cached) # sioobj.to_JSON())
+        
     def push_cluster_configuration(self, scaleioobj, noUpload = False, noInstall= False, noConfigure = False):
         """
         Method push cached ScaleIO cluster configuration to IM (reconfigurations that have been made to cached configuration are committed using IM)
@@ -407,7 +621,7 @@ class Im(Im_Generic_Object):
         #pprint (json.loads(scaleioobj))
         config_params = {'noUpload': noUpload, 'noInstall': noInstall, 'noConfigure':noConfigure}
 
-        resp = self._im_session.post(
+        r1 = self._im_session.post(
             "{}/{}".format(self._im_api_url,"types/Installation/instances/"),
             headers={'Content-type':'application/json','Version':'1.0'},
             params = config_params, 
@@ -416,15 +630,20 @@ class Im(Im_Generic_Object):
             json = json.loads(scaleioobj),
             stream=True
         )
-        if not resp.ok:
+        if not r1.ok:
             # Something went wrong
-            self.logger.error("Error push_cluster_configuration() - " + "Errorcode: {}".format(resp.text))
-        self.logger.debug("Response: " + "{}".format(resp.text))
-        return resp.text
+            self.logger.error("Error push_cluster_configuration() - " + "Errorcode: {}".format(r1.status_code))
+        
+        #print "Response after push_cluster_configuration()"
+        
+        # RESPONSE NEED TO BE WRAPPED IN try/catch. Cannot assume JSON is returned.
+        #print r1.text
+        #pprint (json.loads(r1.text))
+        return r1.text
    
     # Add API client methods here that interact with IM API
     @property
-    def system(self):
+    def system(self): # Change to something that is usable. A Class for Generate CSV for example.
         pass
     
     def uploadPackages(self, directory):        
@@ -435,15 +654,22 @@ class Im(Im_Generic_Object):
         files_to_upload_dict = {}
         files_to_upload_list = [ f for f in listdir(directory) if isfile(join(directory,f)) ]
         self.logger.debug("uploadPackages(" + "{})".format(directory))
+        #print "Files to upload:"
         for index in range(len(files_to_upload_list)):
             self.logger.info(files_to_upload_list[index])
             self.uploadFileToIM (directory, files_to_upload_list[index], files_to_upload_list[index])
+            #file_tuple = {'files':{str(files_to_upload_list[index]), open(directory + files_to_upload_list[index], 'rb'), 'application/x-rpm'}}      
+            #file_tuple = {str(files_to_upload_list[index]), {open(directory + files_to_upload_list[index], 'rb'), 'application/x-rpm'}}
+            #file_tuple = {'files': (str(files_to_upload_list[index]), open(directory + files_to_upload_list[index], 'rb'), 'application/x-rpm')}
+            #file_tuple = (str(files_to_upload_list[index]), open(directory + files_to_upload_list[index], 'rb'))
+            #file_tuple = {str(files_to_upload_list[index]), open(directory + files_to_upload_list[index], 'rb'), 'application/x-rpm'}
+            #files_data_to_upload_list.append(file_tuple)
+        #print "Files to upload Dictionary:"
+
         
     def uploadFileToIM (self, directory, filename, title):
         """
         Parameters as they look in the form for uploading packages to IM
-        
-        ### TODO: Investigate if this have to be this complicated. Remember that IM need additional login and session to handle file uploads for some reason.
         """
         self.logger.debug("uploadFileToIM(" + "{},{},{})".format(directory, filename, title))
         parameters = {'data-filename-placement':'inside',
@@ -473,7 +699,8 @@ class Im(Im_Generic_Object):
             data = parameters
             )
         self.logger.info("Uploaded: " + "{}".format(filename))
-        self.logger.debug("Response: " + "{}".format(resp.text))
+        self.logger.debug("HTTP Response: " + "{}".format(resp.status_code))
+        #print "resp.text = " + resp.text
                 
     def deleteFileFromIM(self, filename):
         pass
@@ -485,13 +712,70 @@ class Im(Im_Generic_Object):
         ##### NEED TO BE IMPLEMENTED
         # Get list of installed files.
         # Reverse engineer how the process works using the IM Webui
+    
+    def uploadCsvConfiguration(self, conf_filename):
+        """
+        NOT NEEDED. JSON can be POSTed to IM instead of sending a CSV that is locally parsed and converted to JSON.
+        
+        Remote Address:192.168.100.51:443
+        Request URL:https://192.168.100.51/types/Configuration/instances/actions/parseFromCSV
+        Request Method:POST
+        Status Code:200 OK
+        Request Headersview source
+        Accept:*/*
+        Accept-Encoding:gzip, deflate
+        Accept-Language:en-US,en;q=0.8,sv;q=0.6
+        Connection:keep-alive
+        Content-Length:433
+        Content-Type:multipart/form-data; boundary=----WebKitFormBoundaryY1f2eTo1mOvh744k
+        Cookie:JSESSIONID=A0823886072B2CEBA327A9185AC2BFE0
+        Host:192.168.100.51
+        Origin:https://192.168.100.51
+        Referer:https://192.168.100.51/install.jsp
+        User-Agent:Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/40.0.2214.111 Safari/537.36
+        X-Requested-With:XMLHttpRequest
+        Request Payload
+        ------WebKitFormBoundaryY1f2eTo1mOvh744k
+        Content-Disposition: form-data; name="file"; filename="ScaleIO_Minimal_Config_51.csv"
+        Content-Type: text/csv
+
+        """
+        parameters = {'selectInstallOrExtend':'install', #'install' or 'extend'
+                      'name':'file',
+                      'id':'fileToUpload',
+                      'filename':'config.csv'
+                      }
+        file_dict = {'file':('config.csv', open(conf_filename, 'rb'), 'text/csv')}
+        """
+        files = {'file': ('report.csv', 'some,data,to,send\nanother,row,to,send\n')}
+        """
+        
+        temp_username = self._username
+        temp_password = self._password
+        temp_im_api_url = self._im_api_url
+        temp_im_session = requests.Session()
+        #self._im_session.headers.update({'Accept': 'application/json', 'Version': '1.0'}) # Accept only json
+        temp_im_session.mount('https://', TLS1Adapter())
+        temp_im_verify_ssl = self._im_verify_ssl
+
+
+        resp = temp_im_session.post(
+        #resp = self._do_post(
+            "{}/{}".format(temp_im_api_url,"types/Configuration/instances/actions/parseFromCSV"),
+            auth=HTTPBasicAuth('admin', 'Password1!'),
+            #headers = m.content_type,
+            files = file_dict,
+            verify = False,
+            data = parameters
+            )
+        #pprint (resp)
      
     def getInstallerUrl(self):
         pass
 
 
 ##===============================================
-## IM Integration Implementation  
+## IM Integration Implmentation  
 
 if __name__ == "__main__":
     pass

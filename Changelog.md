@@ -60,16 +60,13 @@ Initial code to test integration against ScaleIO API
 * delete_volume() - Obey kwargs 'autoUnmap'
 * map_volume_to_sdc() and unmap_volume_from_sdc() - Changed kwargs to 'enableMapAllSdcs'
 
-v0.4 (WIP)
-Framework for live testing
-Add SDS
-Remove SDS
-Upgrade cluster binaries using IM
-Extend cluster using IM
-Network Management for SDS
-Device Mgmt for SDS
-Common Error handler
+## v0.34 (beta4) WIP
+* Make logging consisent
+* Error handling - Find a consistent way to return errors to caller (caller have to use try/catch???)
+* Never released
 
+## v0.4
+* Restructure of code
 
 ## v0.4+
 * Unit Testing
@@ -77,6 +74,6 @@ Common Error handler
 * Remove SDS
 * IM integration to automate upgrade of cluster software
 * IM integration to allow expansion of cluster with new nodes (SDS, SDCs
+* Register/Unregister SDC in cluster
 * Statistics gathering
 * Move classes (at least the bigger ones) into own files
-
