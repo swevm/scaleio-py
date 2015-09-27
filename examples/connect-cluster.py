@@ -17,3 +17,5 @@ print "--- ScaleIO Protection Domains ---"
 pprint(sio.protection_domains)
 print "--- ScaleIO Fault Sets ---"
 pprint(sio.fault_sets)
+print "--- ScaleIO Statistics ---"
+pprint(sio.statistics)

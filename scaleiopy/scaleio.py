@@ -25,6 +25,7 @@ from scaleiopy.api.scaleio.mapping.ip_list import IP_List
 from scaleiopy.api.scaleio.mapping.link import Link
 from scaleiopy.api.scaleio.mapping.snapshotspecification import SnapshotSpecification
 from scaleiopy.api.scaleio.mapping.vtree import Vtree
+from scaleiopy.api.scaleio.mapping.statistics import Statistics
 
 
 # How to remove this one. Let Requests inherit from this class???
@@ -326,6 +327,21 @@ class ScaleIO(SIO_Generic_Object):
                 Vtree.from_dict(vtree)
             )
         return all_vtrees
+
+    @property
+    def statistics(self):
+        """
+        Returns a `list` of all the `System` Statistics.  Updates every time - no caching.
+        :return: a `list` of all the `System` Statistics known to the cluster.
+        :rtype: list
+        """
+        self._check_login()
+        response = self._do_get("{}/{}{}/{}".format(self._api_url, "instances/System::", str(self.get_system_id()), "relationships/Statistics")).json()
+        return response
+        #all_stats = []
+        #for statistic in response:
+        #	all_stats.append(ScaleIO_Statistics.from_dict(statistic))
+        #return all_stats
 
     def get_system_objects(self):
         return self.system
