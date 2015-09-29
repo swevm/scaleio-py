@@ -63,8 +63,12 @@ Initial code to test integration against ScaleIO API
 ## v0.34 (beta4) WIP
 * Make logging consisent
 * Error handling - Find a consistent way to return errors to caller (caller have to use try/catch???)
+* Never released
 
-## v0.3+
+## v0.4
+* Restructure of code - will be backwards compatible with v0.3beta3
+
+## v0.4+
 * Unit Testing
 * Add SDS
 * Remove SDS
@@ -73,4 +77,3 @@ Initial code to test integration against ScaleIO API
 * Register/Unregister SDC in cluster
 * Statistics gathering
 * Move classes (at least the bigger ones) into own files
-

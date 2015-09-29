@@ -15,7 +15,7 @@ setup(
     author_email='magnus@karabas.nu',
     name='ScaleIO-py',
     description='Python interface to ScaleIO 1.31+ REST API',
-    version="0.3.3-3",
+    version="0.4.0-0",
     url='https://github.com/swevm/scaleio-py/',
     license='Apache License',
     packages=find_packages(),

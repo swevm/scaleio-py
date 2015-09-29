@@ -12,11 +12,21 @@ import time
 from os import listdir
 from os.path import isfile, join
 import logging
-from scaleioobject import *
-from installerfsm import *
 
+# API specific imports
+#from scaleiopy.util.tls1adapter import TLS1Adapter
 
-#from pprint import pprint
+from api.im.mapping.im_generic_object import Im_Generic_Object
+
+from scaleiopy.api.im.mapping.node import Node_Object
+from scaleiopy.api.im.mapping.mdm import Mdm_Object
+from scaleiopy.api.im.mapping.callhome_configuration import Call_Home_Configuration_Object
+from scaleiopy.api.im.mapping.tb import Tb_Object
+from scaleiopy.api.im.mapping.syslog_configuration import Remote_Syslog_Configuration_Object
+from scaleiopy.api.im.mapping.sdc import Sdc_Object
+from scaleiopy.api.im.mapping.sds import Sds_Object
+from scaleiopy.api.im.mapping.sds_device import Sds_Device_Object
+from scaleiopy.api.im.system import System_Object
 
 class TLS1Adapter(HTTPAdapter):
     """
@@ -28,33 +38,6 @@ class TLS1Adapter(HTTPAdapter):
                                        maxsize=maxsize,
                                        block=block,
                                        ssl_version=ssl.PROTOCOL_TLSv1)
-
-class Im_Generic_Object1(object):
-    @classmethod
-    def get_class_name(cls):
-        """
-        A helper method that returns the name of the class.  Used by __str__ below
-        """
-        return cls.__name__
-
-    def __str__(self):
-        """
-        A convinience method to pretty print the contents of the class instance
-        """
-        # to show include all variables in sorted order
-        return "<{}> @ {}:\n".format(self.get_class_name(), id(self)) + "\n".join(
-            ["  %s: %s" % (key.rjust(22), self.__dict__[key]) for key in sorted(set(self.__dict__))])
-
-    def __repr__(self):
-        return self.__str__()
-
-    def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__)
-
-    def to_DICT(self):
-        return self.__dict__
-    
- 
 
 class Im(Im_Generic_Object):
     """
