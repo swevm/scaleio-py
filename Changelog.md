@@ -66,7 +66,7 @@ Initial code to test integration against ScaleIO API
 * Never released
 
 ## v0.4
-* Restructure of code
+* Restructure of code - will be backwards compatible with v0.3beta3
 
 ## v0.4+
 * Unit Testing

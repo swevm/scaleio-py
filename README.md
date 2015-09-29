@@ -18,6 +18,9 @@ Goal is to resemble the ScaleIO API (not in detail) in a Pythonic way. Atm Scale
 
 
 ## Installation
+* Use "pip install ScaleIO-py" to install v0.3beta3 which is the latest released version. Master tree is going through lots of changes atm and is not stable.
+
+For bleeding edge users:
 * git clone https://github.com/swevm/scaleio-py.git
 * cd scaleio-py
 * python setup.py install
