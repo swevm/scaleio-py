@@ -8,7 +8,7 @@ import sys
 sio = ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2],sys.argv[3],False,"ERROR")
 
 print "* Delete Snapshot"
-result = sio.delete_snapshot(sio.get_system_id(), sys.argv[4])
+result = sio.provisioning.delete_snapshot(sio.get_system_id(), sys.argv[4])
 pprint (result)
 
 

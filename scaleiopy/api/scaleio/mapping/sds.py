@@ -2,11 +2,11 @@
 
 # Project imports
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
-from scaleiopy.api.scaleio.mapping.ip_list import IP_List
-from scaleiopy.api.scaleio.mapping.link import Link
+from scaleiopy.api.scaleio.mapping.ip_list import SIO_IP_List
+from scaleiopy.api.scaleio.mapping.link import SIO_Link
 
 #class ScaleIO_SDS(SIO_Generic_Object):
-class SDS(SIO_Generic_Object):
+class SIO_SDS(SIO_Generic_Object):
     """ ScaleIO SDS Class representation """
     
     def __init__(self,
@@ -31,12 +31,12 @@ class SDS(SIO_Generic_Object):
         self.drl_mode = drlMode
         self.ip_list = []
         for ip in ipList:
-            self.ip_list.append(IP_List(ip['ip'],ip['role']))
+            self.ip_list.append(SIO_IP_List(ip['ip'],ip['role']))
         self.fault_set_id = faultSetId
         self.id = id
         self.links = []
         for link in links:
-            self.links.append(Link(link['href'],link['rel']))
+            self.links.append(SIO_Link(link['href'],link['rel']))
         self.mdm_connection_state = mdmConnectionState
         self.membership_state = membershipState
         self.name = name
@@ -56,5 +56,5 @@ class SDS(SIO_Generic_Object):
         A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        return SDS(**dict)
+        return SIO_SDS(**dict)
  

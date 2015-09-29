@@ -5,6 +5,7 @@ import sys
 
 sio = ScaleIO("https://" + sys.argv[1] + "/api",sys.argv[2], sys.argv[3], False, "ERROR") # HTTPS must be used as there seem to be an issue with 302 responses in Requests when using POST
 print "{}{}".format("--- Current ScaleIO API version is: ", sio.connection.get_api_version())
+
 print "--- ScaleIO System ---"
 pprint(sio.system)
 print "--- ScaleIO SDC ---"
@@ -17,8 +18,6 @@ print "--- ScaleIO Protection Domains ---"
 pprint(sio.protection_domains)
 print "--- ScaleIO Fault Sets ---"
 pprint(sio.fault_sets)
-print "--- ScaleIO Storage Pools ---"
-pprint(sio.storage_pools)   
 print "--- ScaleIO Statistics ---"
-#pprint(sio.statistics)
 pprint(sio.statistics.get())
+

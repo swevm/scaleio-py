@@ -4,7 +4,7 @@
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
 
 
-class SnapshotSpecification(SIO_Generic_Object):
+class SIO_SnapshotSpecification(SIO_Generic_Object):
     """
     Input: list of SIO Snapshot definitions
             For example: { "snapshotDefs": [ {" volumeId":"2dd9132300000000", "snapshotName":"000_snap1"}, {"volumeId":"2dd9132300000004", "snapshotName":"004_snap1" }]}

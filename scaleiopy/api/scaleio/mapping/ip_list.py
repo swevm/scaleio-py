@@ -1,6 +1,6 @@
 # Imports
 
-class IP_List(object):
+class SIO_IP_List(object):
     def __init__(self, ip, role):
         self.ip = ip
         self.role = role

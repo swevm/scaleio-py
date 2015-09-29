@@ -2,11 +2,11 @@
 
 # Project imports
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
-from scaleiopy.api.scaleio.mapping.link import Link
+from scaleiopy.api.scaleio.mapping.link import SIO_Link
 
 
 #class ScaleIO_Fault_Set(SIO_Generic_Object):
-class Fault_Set(SIO_Generic_Object):
+class SIO_Fault_Set(SIO_Generic_Object):
 
     """ ScaleIO Faultset Class repreentation """
     
@@ -22,7 +22,7 @@ class Fault_Set(SIO_Generic_Object):
         self.protectionDomainId=protectionDomainId
         self.links = []
         for link in links:
-            self.links.append(Link(link['href'],link['rel']))
+            self.links.append(SIO_Link(link['href'],link['rel']))
 
     @staticmethod
     def from_dict(dict):
@@ -30,5 +30,5 @@ class Fault_Set(SIO_Generic_Object):
         A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        return Fault_Set(**dict)
+        return SIO_Fault_Set(**dict)
     

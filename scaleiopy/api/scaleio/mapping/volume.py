@@ -2,11 +2,11 @@
 
 # Project imports
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
-from scaleiopy.api.scaleio.mapping.link import Link
+from scaleiopy.api.scaleio.mapping.link import SIO_Link
 import time
 
 #class ScaleIO_Volume(SIO_Generic_Object):
-class Volume(SIO_Generic_Object):
+class SIO_Volume(SIO_Generic_Object):
 
     """ ScaleIO Volume Class representation """
     
@@ -30,7 +30,7 @@ class Volume(SIO_Generic_Object):
         self.id = id
         self.links = []
         for link in links:
-            self.links.append(Link(link['href'], link['rel']))
+            self.links.append(SIO_Link(link['href'], link['rel']))
         self.ancestor_volume = ancestorVolumeId
         self.consistency_group_id=consistencyGroupId
         self.creation_time=time.gmtime(creationTime)
@@ -53,4 +53,4 @@ class Volume(SIO_Generic_Object):
         A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        return Volume(**dict)
+        return SIO_Volume(**dict)

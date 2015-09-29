@@ -1,7 +1,7 @@
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
 
 
-class Statistics(SIO_Generic_Object):
+class SIO_Statistics(SIO_Generic_Object):
     """ Represents one ScaleIO cluster/installation as a class object """
 
     def __init__(self,
@@ -168,4 +168,4 @@ class Statistics(SIO_Generic_Object):
         A convenience method that directly creates a new instance from a passed dictionary (that probably came from a
         JSON response from the server.
         """
-        return Statistics(**dict)
+        return SIO_Statistics(**dict)

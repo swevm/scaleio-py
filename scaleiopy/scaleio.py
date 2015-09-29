@@ -8,24 +8,31 @@ import ssl
 import logging
 import time
 import sys
-import logging
+
 
 from pprint import pprint
 
 # API specific imports
 from scaleiopy.api.scaleio.mapping.sio_generic_object import SIO_Generic_Object
-from scaleiopy.api.scaleio.system import System
-from scaleiopy.api.scaleio.mapping.sdc import SDC
-from scaleiopy.api.scaleio.mapping.sds import SDS
-from scaleiopy.api.scaleio.mapping.volume import Volume
-from scaleiopy.api.scaleio.mapping.storage_pool import Storage_Pool
-from scaleiopy.api.scaleio.mapping.protection_domain import Protection_Domain
-from scaleiopy.api.scaleio.mapping.faultset import Fault_Set
-from scaleiopy.api.scaleio.mapping.ip_list import IP_List
-from scaleiopy.api.scaleio.mapping.link import Link
-from scaleiopy.api.scaleio.mapping.snapshotspecification import SnapshotSpecification
-from scaleiopy.api.scaleio.mapping.vtree import Vtree
-from scaleiopy.api.scaleio.mapping.statistics import Statistics
+from scaleiopy.api.scaleio.system import SIO_System
+from scaleiopy.api.scaleio.mapping.sdc import SIO_SDC
+from scaleiopy.api.scaleio.mapping.sds import SIO_SDS
+from scaleiopy.api.scaleio.mapping.volume import SIO_Volume
+from scaleiopy.api.scaleio.mapping.storage_pool import SIO_Storage_Pool
+from scaleiopy.api.scaleio.mapping.protection_domain import SIO_Protection_Domain
+from scaleiopy.api.scaleio.mapping.faultset import SIO_Fault_Set
+from scaleiopy.api.scaleio.mapping.ip_list import SIO_IP_List
+from scaleiopy.api.scaleio.mapping.link import SIO_Link
+from scaleiopy.api.scaleio.mapping.snapshotspecification import SIO_SnapshotSpecification
+from scaleiopy.api.scaleio.mapping.vtree import SIO_Vtree
+from scaleiopy.api.scaleio.mapping.statistics import SIO_Statistics
+
+from scaleiopy.api.scaleio.metering.statistics import Statistics
+from scaleiopy.api.scaleio.common.connection import Connection
+from scaleiopy.api.scaleio.provisioning.volume import Volume
+from scaleiopy.api.scaleio.cluster.cluster import Cluster
+from scaleiopy.api.scaleio.cluster.storagepool import StoragePool
+from scaleiopy.api.scaleio.cluster.protectiondomain import ProtectionDomain
 
 
 # How to remove this one. Let Requests inherit from this class???
@@ -67,21 +74,25 @@ class ScaleIO(SIO_Generic_Object):
         :rtype: ScaleIO Object
         """
 
-        self._username = username
-        self._password = password
-        self._api_url = api_url
-        self._session = requests.Session()
-        self._session.headers.update({'Accept': 'application/json', 'Version': '1.0'}) # Accept only json
-        self._session.mount('https://', TLS1Adapter())
-        self._verify_ssl = verify_ssl
-        self._logged_in = False
-        self._api_version = None
-        requests.packages.urllib3.disable_warnings() # Disable unverified connection warning.
         logging.basicConfig(format='%(asctime)s: %(levelname)s %(module)s:%(funcName)s | %(message)s',
             level=self._get_log_level(debugLevel))
         self.logger = logging.getLogger(__name__)
         self.logger.debug("Logger initialized!")
-        self._check_login() # Login. Otherwise login is called upon first API operation
+
+
+        # Feature group init
+        
+        # API -> Connection
+        self.connection = Connection(self, api_url, username, password, verify_ssl=False, debugLevel=None)
+        self.connection._check_login() # Login. Otherwise login is called upon first API operation
+        # API -> Statistics
+        self.statistics = Statistics(self)
+        self.provisioning = Volume(self)
+        # API -> cluster level
+        self.cluster = Cluster(self)
+        self.cluster_sp = StoragePool(self)
+        self.cluster_pd = ProtectionDomain(self)
+
 
     @staticmethod
     def _get_log_level(level):
@@ -109,86 +120,7 @@ class ScaleIO(SIO_Generic_Object):
         else:
             raise Exception("UnknownLogLevelException: enter a valid log level")
 
-    def _login(self):
-        self.logger.debug("Logging into " + "{}/{}".format(self._api_url, "login"))
-        self.logger.debug("With credentials " + "{}/{}".format(self._username, self._password))
-        login_response = self._session.get(
-            "{}/{}".format(self._api_url,"login"),
-            verify=self._verify_ssl,
-            auth=HTTPBasicAuth(self._username, self._password)
-        ).json()
-        if type(login_response) is dict:
-            # If we got here, something went wrong during login
-            for key, value in login_response.iteritems():
-                if key == 'errorCode':
-                    self.logger.error('Login error code: %s', login_response['message'])
-                    raise RuntimeError(login_response['message'])
-        else:
-            self._auth_token = login_response
-            self.logger.debug('Authentication token recieved: %s', self._auth_token)
-            self._session.auth = HTTPBasicAuth('',self._auth_token)
-            self._logged_in = True
-            # Set _api_version_ to current version of connected API
-            self._api_version = login_response = self._session.get(
-                "{}/{}".format(self._api_url,"version"),
-                verify=self._verify_ssl,
-                auth=HTTPBasicAuth(self._username, self._password)
-                ).json()
-
-    def _check_login(self):
-        if not self._logged_in:
-            self._login()
-        else:
-            pass
-        return None
-    
-    # FIX _do_get method, easier to have one place to do error handling than in all other methods that call _do_get()
-    def _do_get(self, url, **kwargs):
-        """
-        Convenient method for GET requests
-        Returns http request status value from a POST request
-        """
-        #TODO:
-        # Add error handling. Check for HTTP status here would be much more conveinent than in each calling method
-        scaleioapi_post_headers = {'Content-type':'application/json','Version':'1.0'}
-        try:
-            #response = self._session.get("{}/{}".format(self._api_url, uri)).json()
-            response = self._session.get(url)
-            if response.status_code == requests.codes.ok:
-                self.logger.debug('_do_get() - HTTP response OK, data: %s', response.text)                
-                return response
-            else:
-                self.logger.error('_do_get() - HTTP response error: %s', response.status_code)
-                self.logger.error('_do_get() - HTTP response error, data: %s', response.text)                
-                raise RuntimeError("_do_get() - HTTP response error" + response.status_code)
-        except Exception as e:
-            self.logger.error("_do_get() - Unhandled Error Occurred: %s" % str(e)) 
-            raise RuntimeError("_do_get() - Communication error with ScaleIO gateway")
-        return response
-
-    def _do_post(self, url, **kwargs):
-        """
-        Convenient method for POST requests
-        Returns http request status value from a POST request
-        """
-        #TODO:
-        # Add error handling. Check for HTTP status here would be much more conveinent than in each calling method
-        scaleioapi_post_headers = {'Content-type':'application/json','Version':'1.0'}
-        try:
-            response = self._session.post(url, headers=scaleioapi_post_headers, **kwargs)
-            self.logger.debug('_do_post() - HTTP response: %s', response.text)
-            if response.status_code == requests.codes.ok:
-                self.logger.debug('_do_post() - HTTP response OK, data: %s', response.text)                
-                return response
-            else:
-                self.logger.error('_do_post() - HTTP response error: %s', response.status_code)
-                self.logger.error('_do_post() - HTTP response error, data: %s', response.text)                
-                raise RuntimeError("_do_post() - HTTP response error" + response.status_code)
-        except Exception as e:
-            self.logger.error("_do_post() - Unhandled Error Occurred: %s" % str(e)) 
-            raise RuntimeError("_do_post() - Communication error with ScaleIO gateway")
-        return response
-
+    # Common properties that interact with API
     @property
     def system(self):
         """
@@ -196,11 +128,11 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `System` objects known to the cluster.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/System/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/System/instances")).json()
         all_system_objects = []
         for system_object in response:
-            all_system_objects.append(System.from_dict(system_object))
+            all_system_objects.append(SIO_System.from_dict(system_object))
         return all_system_objects
 
     @property
@@ -210,11 +142,11 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `System` objects known to the cluster.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/StoragePool/instances")).json() 
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/StoragePool/instances")).json() 
         all_storage_pools = []
         for storage_pool_object in response:
-            all_storage_pools.append(Storage_Pool.from_dict(storage_pool_object))
+            all_storage_pools.append(SIO_Storage_Pool.from_dict(storage_pool_object))
         return all_storage_pools
     
     @property
@@ -224,12 +156,12 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `ScaleIO_SDC` known to the cluster.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/Sdc/instances")).json()       
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/Sdc/instances")).json()       
         all_sdc = []
         for sdc in response:
             all_sdc.append(
-                SDC.from_dict(sdc)
+                SIO_SDC.from_dict(sdc)
             )
         return all_sdc
 
@@ -240,12 +172,12 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `ScaleIO_SDS` known to the cluster.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url,"types/Sds/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url,"types/Sds/instances")).json()
         all_sds = []
         for sds in response:
             all_sds.append(
-                SDS.from_dict(sds)
+                SIO_SDS.from_dict(sds)
             )
         return all_sds
 
@@ -256,12 +188,12 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `Volume` known to the cluster.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/Volume/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/Volume/instances")).json()
         all_volumes = []
         for volume in response:
             all_volumes.append(
-                Volume.from_dict(volume)
+                SIO_Volume.from_dict(volume)
             )
         return all_volumes
 
@@ -272,8 +204,8 @@ class ScaleIO(SIO_Generic_Object):
         :return: a `list` of all the `ScaleIO_Volume` that have a are of type Snapshot.
         :rtype: list
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/Volume/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/Volume/instances")).json()
         all_volumes_snapshot = []
         for volume in response:
             if volume['volumeType'] == 'Snapshot':
@@ -287,12 +219,12 @@ class ScaleIO(SIO_Generic_Object):
         """
         :rtype: list of Protection Domains
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/ProtectionDomain/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/ProtectionDomain/instances")).json()
         all_pds = []
         for pd in response:
             all_pds.append(
-                Protection_Domain.from_dict(pd)
+                SIO_Protection_Domain.from_dict(pd)
             )
         return all_pds
 
@@ -303,12 +235,12 @@ class ScaleIO(SIO_Generic_Object):
         may prevent the creation of volumes. An SDS can only be added to a Fault Set during the creation of the SDS.
         :rtype: list of Faultset objects
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/FaultSet/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/FaultSet/instances")).json()
         all_faultsets = []
         for fs in response:
             all_faultsets.append(
-                Fault_Set.from_dict(fs)
+                SIO_Fault_Set.from_dict(fs)
             )
         return all_faultsets
 
@@ -319,29 +251,15 @@ class ScaleIO(SIO_Generic_Object):
         :return: List of VTree objects - Can be empty of no VTrees exist
         :rtype: VTree object
         """
-        self._check_login()
-        response = self._do_get("{}/{}".format(self._api_url, "types/VTree/instances")).json()
+        self.connection._check_login()
+        response = self.connection._do_get("{}/{}".format(self.connection._api_url, "types/VTree/instances")).json()
         all_vtrees = []
         for vtree in response:
             all_vtrees.append(
-                Vtree.from_dict(vtree)
+                SIO_Vtree.from_dict(vtree)
             )
         return all_vtrees
 
-    @property
-    def statistics(self):
-        """
-        Returns a `list` of all the `System` Statistics.  Updates every time - no caching.
-        :return: a `list` of all the `System` Statistics known to the cluster.
-        :rtype: list
-        """
-        self._check_login()
-        response = self._do_get("{}/{}{}/{}".format(self._api_url, "instances/System::", str(self.get_system_id()), "relationships/Statistics")).json()
-        return response
-        #all_stats = []
-        #for statistic in response:
-        #	all_stats.append(ScaleIO_Statistics.from_dict(statistic))
-        #return all_stats
 
     def get_system_objects(self):
         return self.system
@@ -349,16 +267,6 @@ class ScaleIO(SIO_Generic_Object):
     def get_system_id(self):
         return self.system[0].id
 
-    def get_api_version(self):
-        """
-        Get version number of SIO API for current installed ScaleIO product
-        rtype: string
-        """
-        # API version scheme:
-        # 1.0 = < v1.32
-        # 1.1 =   v1.32
-        # x.x =   v 2.0
-        return self._api_version 
     def get_sds_in_faultset(self, faultSetObj):
         """
         Get list of SDS objects attached to a specific ScaleIO Faultset
@@ -386,7 +294,7 @@ class ScaleIO(SIO_Generic_Object):
             if sds.name == name:
                 return sds
         raise KeyError("SDS of that name not found")
-
+    '''
     def get_storage_pool_by_name(self, name):
         """
         Get ScaleIO StoragePool object by its name
@@ -412,7 +320,8 @@ class ScaleIO(SIO_Generic_Object):
             if storage_pool.id == id:
                 return storage_pool
         raise KeyError("Storage Pool with that ID not found")
-
+    '''
+    
     def get_sds_by_ip(self,ip):
         """
         Get ScaleIO SDS object by its ip address
@@ -515,7 +424,7 @@ class ScaleIO(SIO_Generic_Object):
         # returning an empty list is
         # valid for snapshots or volumes.
         return sdcList
-    
+    '''    
     def get_volumes_for_sdc(self, sdcObj):
         """
         :param sdcObj: SDC object
@@ -530,8 +439,9 @@ class ScaleIO(SIO_Generic_Object):
                 Volume.from_dict(sdc_volume)
             )
         return all_volumes        
-    
+    '''
 
+    '''
     def get_pd_by_name(self, name):
         """
         Get ScaleIO ProtectionDomain object by its name
@@ -557,7 +467,9 @@ class ScaleIO(SIO_Generic_Object):
             if pd.id == id:
                 return pd
         raise KeyError("Protection Domain with ID " + id + " not found")
-    
+    '''
+
+    '''
     def get_volume_by_id(self, id):
         """
         Get ScaleIO Volume object by its ID
@@ -570,7 +482,9 @@ class ScaleIO(SIO_Generic_Object):
             if vol.id == id:
                 return vol
         raise KeyError("Volume with ID " + id + " not found")
+    '''
     
+    '''
     def get_volumes_for_vtree(self, vtreeObj):
         """
         :param vtreeObj: VTree object
@@ -586,7 +500,9 @@ class ScaleIO(SIO_Generic_Object):
                 Volume.from_dict(vtree_volume)
             )
         return all_volumes
-
+    '''
+    
+    '''
     def get_volume_by_name(self, name):
         """
         Get ScaleIO Volume object by its Name
@@ -604,6 +520,7 @@ class ScaleIO(SIO_Generic_Object):
         if volObj.mappingToAllSdcsEnabled == True:
             return True
         return False
+    '''
     
     def get_faultset_by_id(self, id):
         for fs in self.fault_sets:
@@ -701,6 +618,7 @@ class ScaleIO(SIO_Generic_Object):
         return response
 
     #def create_volume(self, volName, volSizeInMb, pdObj, thinProvision=True, **kwargs): # Worked in v1.31 but not in v1.32
+    '''
     def create_volume(self, volName, volSizeInMb, pdObj, spObj, thinProvision=True, **kwargs): #v1.32 require storagePoolId when creating a volume
         # Check if object parameters are the correct ones, otherwise throw error
         self._check_login()    
@@ -725,6 +643,7 @@ class ScaleIO(SIO_Generic_Object):
                                     else:
                                         self.map_volume_to_sdc(self.get_volume_by_name(volName), self.get_sdc_by_name(value))
         return response
+    '''
 
     def resize_volume(self, volumeObj, sizeInGb, bsize=1000):
         """
